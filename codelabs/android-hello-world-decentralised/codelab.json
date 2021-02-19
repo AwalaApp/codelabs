@@ -1,0 +1,25 @@
+{
+  "environment": "web",
+  "format": "html",
+  "prefix": "https://storage.googleapis.com",
+  "mainga": "UA-49880327-14",
+  "updated": "2021-02-19T16:09:05Z",
+  "id": "android-hello-world-decentralised",
+  "duration": 14,
+  "title": "Decentralised service, Android",
+  "authors": "Gus Narea",
+  "summary": "Hello world on Android (decentralised)",
+  "source": "codelabs/android-decentralised.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "sample"
+  ],
+  "tags": [
+    "medium"
+  ],
+  "feedback": "https://community.relaynet.network/",
+  "url": "android-hello-world-decentralised"
+}
