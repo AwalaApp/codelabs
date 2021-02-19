@@ -2,7 +2,7 @@ summary: Hello world on Android (centralised)
 id: android-hello-world-centralised
 categories: Sample
 tags: medium
-status: Published
+status: Hidden
 authors: Gus Narea
 Feedback Link: https://community.relaynet.network/
 
