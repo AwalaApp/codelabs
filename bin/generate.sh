@@ -26,3 +26,6 @@ node_modules/.bin/gulp dist \
 rm dist/codelabs  # It's a symlink 🤦
 mv codelabs dist/codelabs
 find dist -name '*.html' -exec sed -n -i '/google-analytics.com/!p' {} \;
+
+# Tell GitHub Pages that this isn't a Jekyll site
+touch dist/.nojekyll
