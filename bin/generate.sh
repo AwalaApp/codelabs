@@ -8,6 +8,8 @@ set -o pipefail
 
 CODELABS_DEST_DIR="site/codelabs"
 
+CODELABS_DOMAIN="codelabs.relaynet.network"
+
 # Main
 
 rm -rf "${CODELABS_DEST_DIR}"
@@ -18,9 +20,11 @@ claat export \
 cd site
 
 node_modules/.bin/gulp dist \
-  --base-url=https://codelabs.relaynet.network \
+  "--base-url=https://${CODELABS_DOMAIN}" \
   --codelabs-dir=codelabs \
   --delete-missing
+
+echo "${CODELABS_DOMAIN}" > dist/CNAME
 
 # FFS. Seriously, Google?
 rm dist/codelabs  # It's a symlink 🤦
