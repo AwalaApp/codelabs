@@ -1,2 +1,3 @@
-# codelabs
-Codelabs for Relaynet service providers
+# Awala Codelabs
+
+Codelabs for Awala service providers

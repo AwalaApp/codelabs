@@ -8,7 +8,7 @@ set -o pipefail
 
 CODELABS_DEST_DIR="site/codelabs"
 
-CODELABS_DOMAIN="codelabs.relaynet.network"
+CODELABS_DOMAIN="codelabs.awala.network"
 
 # Main
 
