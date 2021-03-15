@@ -3,7 +3,7 @@
   "format": "html",
   "prefix": "https://storage.googleapis.com",
   "mainga": "UA-49880327-14",
-  "updated": "2021-03-15T12:04:44Z",
+  "updated": "2021-03-15T12:08:05Z",
   "id": "android-hello-world-decentralised",
   "duration": 14,
   "title": "Decentralised service, Android",
@@ -20,6 +20,6 @@
   "tags": [
     "medium"
   ],
-  "feedback": "https://community.relaynet.network/",
+  "feedback": "https://community.awala.network/",
   "url": "android-hello-world-decentralised"
 }

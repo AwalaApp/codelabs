@@ -1,0 +1,127 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Build an Android app for a centralised Awala service (working draft)</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://storage.googleapis.com/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+<script src="https://aardwolf.relaycorp.tech/script.js" data-site="TBSIELNB" defer></script>
+</head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="android-centralised"
+                  title="Build an Android app for a centralised Awala service (working draft)"
+                  environment="web"
+                  feedback-link="https://community.awala.network/">
+    
+      <google-codelab-step label="Overview" duration="2">
+        <p><strong>This is a working draft</strong></p>
+<h2 is-upgraded>What You&#39;ll Build</h2>
+<h2 is-upgraded>Prerequisites</h2>
+<ul>
+<li><a href="https://developer.android.com/studio" target="_blank">Android Studio</a> 4.1 or newer.</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Set up a new project" duration="5">
+        <p class="image-container"><img src="img/311f4097b75ccda9.png"></p>
+<p class="image-container"><img src="img/8ae240bd0a67217.png"></p>
+<h2 is-upgraded>Define dependencies</h2>
+<h2 is-upgraded>Implement user interface</h2>
+<p>Replace <code>src/main/res/layout/activity_main.xml</code> with the following:</p>
+<pre><code language="language-xml" class="language-xml">&lt;?xml version=&#34;1.0&#34; encoding=&#34;utf-8&#34;?&gt;
+&lt;LinearLayout xmlns:android=&#34;http://schemas.android.com/apk/res/android&#34;
+              xmlns:tools=&#34;http://schemas.android.com/tools&#34;
+              android:layout_width=&#34;match_parent&#34;
+              android:layout_height=&#34;match_parent&#34;
+              android:clipChildren=&#34;false&#34;
+              android:clipToPadding=&#34;false&#34;
+              android:orientation=&#34;vertical&#34;
+              android:padding=&#34;16dp&#34;
+              tools:context=&#34;.MainActivity&#34;&gt;
+
+    &lt;androidx.core.widget.NestedScrollView
+            android:layout_width=&#34;match_parent&#34;
+            android:layout_height=&#34;0dp&#34;
+            android:layout_weight=&#34;1&#34;&gt;
+
+        &lt;TextView
+                android:id=&#34;@+id/pings&#34;
+                android:layout_width=&#34;match_parent&#34;
+                android:layout_height=&#34;wrap_content&#34; /&gt;
+    &lt;/androidx.core.widget.NestedScrollView&gt;
+
+    &lt;LinearLayout
+            android:layout_width=&#34;match_parent&#34;
+            android:layout_height=&#34;wrap_content&#34;
+            android:gravity=&#34;end&#34;
+            android:orientation=&#34;horizontal&#34;&gt;
+
+        &lt;com.google.android.material.button.MaterialButton
+                android:id=&#34;@+id/clear&#34;
+                style=&#34;@style/Widget.MaterialComponents.Button.TextButton&#34;
+                android:layout_width=&#34;wrap_content&#34;
+                android:layout_height=&#34;wrap_content&#34;
+                android:layout_gravity=&#34;top|end&#34;
+                android:layout_marginHorizontal=&#34;8dp&#34;
+                android:text=&#34;Clear&#34; /&gt;
+
+        &lt;com.google.android.material.button.MaterialButton
+                android:id=&#34;@+id/send&#34;
+                android:layout_width=&#34;wrap_content&#34;
+                android:layout_height=&#34;wrap_content&#34;
+                android:layout_marginHorizontal=&#34;8dp&#34;
+                android:text=&#34;Send Ping&#34; /&gt;
+    &lt;/LinearLayout&gt;
+&lt;/LinearLayout&gt;
+</code></pre>
+<p>You should now see the following when you activate the <code>Design</code> view of the activity:</p>
+<p class="image-container"><img src="img/39836944caaa0e20.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Send pings" duration="10">
+        
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Receive pongs" duration="5">
+        
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="That&#39;s it!" duration="3">
+        <h2 is-upgraded>What&#39;s next?</h2>
+<h2 is-upgraded>Further reading</h2>
+<h2 is-upgraded>Reference documentation</h2>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://storage.googleapis.com/codelab-elements/native-shim.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/prettify.js"></script>
+  <script src="https://storage.googleapis.com/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+
+</body>
+</html>

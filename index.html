@@ -87,8 +87,23 @@ Codelabs will provide a guided, tutorial, hands-on coding experience. Most codel
 <paper-tab>Duration</paper-tab>
 </paper-tabs>
 </div>
-</div>
+<paper-dropdown-menu label="Filter by category" class="dropdown-filter" no-label-float noink no-animations>
+<paper-listbox id="categorylist" slot="dropdown-content" class="dropdown-content" on-iron-activate="onCategoryActivate" attr-for-selected="filter">
+<paper-item filter="android">android</paper-item>
+</paper-listbox>
+</paper-dropdown-menu></div>
 <card-sorter id="cards" class="site-width">
+<a href="/codelabs/android-centralised/index.html?index=..%2F..index" on-tap="navigate" class="codelab-card category-android" data-category="android" data-title="Build an Android app for a centralised Awala service (working draft)" data-duration="25" data-updated="2021-03-15T12:08:05Z" data-tags="medium" data-pin="">
+<div class="description">Build an Android app for a centralised Awala service (working draft)</div>
+<div class="card-duration">
+<span>25 min </span>
+<span>Updated Mar 15, 2021</span>
+</div>
+<div class="card-footer">
+<div class="category-icon android-icon"></div>
+<paper-button class="android-bg">Start</paper-button>
+</div>
+</a>
 </card-sorter>
 <div id="loading-placeholder" class="site-width">
 Loading Codelabs, please wait...
