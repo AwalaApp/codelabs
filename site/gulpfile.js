@@ -19,6 +19,7 @@ const useref = require('gulp-useref');
 const vulcanize = require('gulp-vulcanize');
 const watch = require('gulp-watch');
 const webserver = require('gulp-webserver');
+const inject = require('gulp-inject-string');
 
 // Uglify ES6
 const uglifyes = require('uglify-es');
@@ -90,6 +91,10 @@ const STAGING_BUCKET = gcs.bucketName(args.stagingBucket || 'DEFAULT_STAGING_BUC
 // VIEWS_FILTER is the filter to use for view inclusion.
 const VIEWS_FILTER = args.viewsFilter || '*';
 
+// Fathom Analytics
+const FATHOM_SCRIPT_URL = 'https://aardwolf.relaycorp.tech/script.js';
+const FATHOM_SITE = 'TBSIELNB'
+
 // clean:build removes the build directory
 gulp.task('clean:build', (callback) => {
   return del('build')
@@ -101,7 +106,7 @@ gulp.task('clean:dist', (callback) => {
 });
 
 gulp.task('clean:codelabs', (callback) => {
-  return del('codelabs')
+  return del(CODELABS_DIR)
 });
 
 // clean:js removes the built javascript
@@ -119,7 +124,17 @@ gulp.task('clean', gulp.parallel(
 
 // build:codelabs copies the codelabs from the directory into build.
 gulp.task('build:codelabs:claat', (done) => {
-  run('claat', ['export', '-o', 'codelabs', '../codelabs/*.md'], done);
+  run('claat', ['export', '-o', CODELABS_DIR, '../codelabs/*.md'], done);
+});
+gulp.task('build:codelabs:injectFathomScript', (done) => {
+  return gulp.src(`${CODELABS_DIR}/*/index.html`)
+      .pipe(
+          inject.before(
+              '</head>',
+              `<script src="${FATHOM_SCRIPT_URL}" data-site="${FATHOM_SITE}" defer></script>\n`,
+          )
+      )
+      .pipe(gulp.dest(CODELABS_DIR))
 });
 gulp.task('build:codelabs:copy', (done) => {
   copyFilteredCodelabs('build');
@@ -127,6 +142,7 @@ gulp.task('build:codelabs:copy', (done) => {
 });
 gulp.task('build:codelabs', gulp.series(
   'build:codelabs:claat',
+  'build:codelabs:injectFathomScript',
   'build:codelabs:copy',
 ));
 
