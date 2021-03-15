@@ -47,7 +47,7 @@ Let's create a new project on Android Studio by going to `File` -> `New` -> `New
 
 ![](./images/android-centralised/android-studio-project-template.png)
 
-In the final screen, make sure to select Kotlin as the programming language and API 21 as the minimum Android SDK.
+In the final screen, make sure to leave Kotlin as the programming language and API 21 as the minimum Android SDK.
 
 ![](./images/android-centralised/android-studio-project-config.png)
 
@@ -57,7 +57,7 @@ Open `app/build.gradle` and add the following inside `dependencies { ... }`:
 
 ```groovy
     // Awala
-    implementation 'tech.relaycorp:relaydroid:1.3.4'
+    implementation 'tech.relaycorp:awaladroid:1.5.1'
     // Preferences
     implementation 'androidx.preference:preference-ktx:1.1.1'
     implementation 'com.github.tfcporciuncula.flow-preferences:flow-preferences:1.3.4'
@@ -123,13 +123,54 @@ You should now see the following when you activate the `Design` view of the acti
 
 ![](./images/android-centralised/activity-design-view.png)
 
+### Request permission to communicate with the private gateway
+
+Add the following line inside the `&lt;manifest>` of your `AndroidManifest.xml` file for your app to be able to communicate with the [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway):
+
+```xml
+<uses-permission android:name="tech.relaycorp.gateway.SYNC" />
+```
+
+### Bind to the private gateway
+
+TODO
+
+## Configure endpoints
+
+Whilst Internet apps communicate with each other using _clients_ and _servers_, Awala apps use _endpoints_. Awala makes extensive use of cryptography to ensure the communication between endpoints is private and secure, which requires some upfront work before the actual communication can start. 
+
+Fortunately, you'll be using the [Android endpoint library](https://github.com/relaycorp/awala-endpoint-android), which abstracts the low-level details so that you can focus on the important features that will make your app stand out from the rest.
+
+### Configure the third-party endpoint
+
+Because you're implementing a centralised service, all the endpoints in the service will be communicating with a specific public endpoint, so you'll need the organisation operating the public endpoint to give you some information about it. In this case, you'll use a public endpoint operated by Relaycorp, whose parameters are:
+
+- Public address: `ping.awala.services`.
+- Identity certificate: Can be downloaded from `https://pong-pohttp.awala.services/certificates/identity.der`.
+
+**Apps in a centralised service must be shipped with the data above**. Identity certificates will expire eventually and the operator should also periodically rotate them, so you should make sure that your app is distributed with a relatively recent version of the public endpoint's identity certificate. For example, your release process could automatically download the certificate.
+
+To keep things simple in this codelab, you're just going to manually download the identity certificate once and save it on `app/src/main/res/raw/pub-endpoint-identity.der`. If you're running Linux or macOS, the following should work from the root of the project:
+
+```shell
+mkdir app/src/main/res/raw
+curl -o app/src/main/res/raw/pub-endpoint-identity.der \
+  https://pong-pohttp.awala.services/certificates/identity.der
+```
+
+With the certificate on disk, it's now time to register the public endpoint the first time the app starts.
+
+### Configure your own endpoint
+
+
+
 ## Send pings
 
 Duration: 0:10:00
 
 ## Receive pongs
 
-Duration: 0:5:00
+Duration: 0:10:00
 
 Awala requires messages bound for private endpoints to be pre-authorised by the recipient in order to prevent abuse, but no authorisation is required when the message is bound for public endpoints.
 
@@ -137,11 +178,11 @@ Awala requires messages bound for private endpoints to be pre-authorised by the 
 
 Duration: 0:3:00
 
+Well done!
+
 ### What's next?
 
 
 ### Further reading
 
-
-### Reference documentation
- 
+- Reference documentation
