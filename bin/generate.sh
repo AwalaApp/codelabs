@@ -6,16 +6,9 @@ set -o pipefail
 
 # Constants
 
-CODELABS_DEST_DIR="site/codelabs"
-
 CODELABS_DOMAIN="codelabs.awala.network"
 
 # Main
-
-rm -rf "${CODELABS_DEST_DIR}"
-claat export \
-  -o "${CODELABS_DEST_DIR}" \
-  codelabs/*.md
 
 cd site
 

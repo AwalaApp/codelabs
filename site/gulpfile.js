@@ -60,7 +60,7 @@ const BASE_URL = args.baseUrl || 'https://example.com';
 // CODELABS_DIR is the directory where the actual codelabs exist on disk.
 // Despite being a constant, this can be overridden with the --codelabs-dir
 // flag.
-const CODELABS_DIR = args.codelabsDir || '.';
+const CODELABS_DIR = args.codelabsDir || 'codelabs';
 
 // CODELABS_ENVIRONMENT is the environment for which to build codelabs.
 const CODELABS_ENVIRONMENT = args.codelabsEnv || 'web';
@@ -100,6 +100,10 @@ gulp.task('clean:dist', (callback) => {
   return del('dist')
 });
 
+gulp.task('clean:codelabs', (callback) => {
+  return del('codelabs')
+});
+
 // clean:js removes the built javascript
 // NOTE: this is not included in the default 'clean' task
 gulp.task('clean:js', (callback) => {
@@ -110,13 +114,21 @@ gulp.task('clean:js', (callback) => {
 gulp.task('clean', gulp.parallel(
   'clean:build',
   'clean:dist',
+  'clean:codelabs',
 ));
 
 // build:codelabs copies the codelabs from the directory into build.
-gulp.task('build:codelabs', (done) => {
+gulp.task('build:codelabs:claat', (done) => {
+  run('claat', ['export', '-o', 'codelabs', '../codelabs/*.md'], done);
+});
+gulp.task('build:codelabs:copy', (done) => {
   copyFilteredCodelabs('build');
   done();
 });
+gulp.task('build:codelabs', gulp.series(
+  'build:codelabs:claat',
+  'build:codelabs:copy',
+));
 
 // build:scss builds all the scss files into the dist dir
 gulp.task('build:scss', () => {
@@ -328,12 +340,17 @@ gulp.task('watch:js', () => {
   gulp.watch(srcs, gulp.series('build:js', 'build:html'));
 });
 
+gulp.task('watch:codelabs', () => {
+  gulp.watch('../codelabs/**/*', gulp.series('build:codelabs'));
+});
+
 // watch starts all watchers
 gulp.task('watch', gulp.parallel(
   'watch:css',
   'watch:html',
   'watch:images',
   'watch:js',
+  'watch:codelabs',
 ));
 
 // serve builds the website, starts the webserver, and watches for changes.
@@ -389,8 +406,13 @@ const gulpdebug = () => {
 
 // run executes the given command with the specified arguments.
 const run = (cmd, args, callback) => {
-  const proc = spawn(cmd, args, { stdio: 'inherit' });
-  proc.on('close', callback);
+  const proc = spawn(cmd, args, { stdio: 'inherit', shell: true });
+  proc.on('close', (exitCode) => {
+    if (exitCode !== 0) {
+      console.error(`${cmd} failed with exit code ${exitCode}`);
+    }
+    callback(null, new Error(`${cmd} failed`));
+  });
 }
 
 // parseViewMetadata parses the metadata of a single view and returns that metadata
