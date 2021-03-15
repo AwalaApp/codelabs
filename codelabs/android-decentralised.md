@@ -4,7 +4,7 @@ categories: Sample
 tags: medium
 status: Hidden
 authors: Gus Narea
-Feedback Link: https://community.relaynet.network/
+Feedback Link: https://community.awala.network/
 
 # Decentralised service, Android
 
