@@ -1,4 +1,4 @@
-summary: Build an Android app for a centralised Awala service (working draft)
+summary: Build an Android app for a centralised Awala service
 id: android-centralised
 categories: Android
 tags: medium
@@ -6,13 +6,11 @@ status: Published
 authors: Gus Narea
 Feedback Link: https://community.awala.network/
 
-# Build an Android app for a centralised Awala service (working draft)
+# Build an Android app for a centralised Awala service
 
 ## Overview
 
 Duration: 0:2:00
-
-**This is a working draft**
 
 ### What You'll Build
 
