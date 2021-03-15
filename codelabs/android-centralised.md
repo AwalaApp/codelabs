@@ -4,7 +4,7 @@ categories: Android
 tags: medium
 status: Published
 authors: Gus Narea
-Feedback Link: https://community.awala.network/
+Feedback Link: https://github.com/AwalaNetwork/codelabs
 
 # Build an Android app for a centralised Awala service
 
@@ -12,7 +12,7 @@ Feedback Link: https://community.awala.network/
 
 Duration: 0:5:00
 
-An _Awala service_ is a collection of apps that exchange mutually-intelligible messages using _endpoints_. Server-side apps exposed as Internet hosts will have _public endpoints_ (e.g., `your-service.com`), whilst all other apps (e.g., mobile, desktop) will have _private endpoints_.
+An _Awala service_ is a collection of mobile, desktop, server-side and/or CLI apps that exchange mutually-intelligible messages using _endpoints_. Server-side apps exposed as Internet hosts will have _public endpoints_ (e.g., `your-service.com`), whilst all other apps (e.g., mobile, desktop) will have _private endpoints_.
 
 The service is _centralised_ if there's a public endpoint as the sender or recipient of all messages, _decentralised_ if all endpoints are private. Alternatively, if there's a public endpoint involved in some but not necessarily all messages, then the service is _hybrid_.
 
@@ -20,19 +20,17 @@ Anyone can define Awala services, but to keep this codelab simple, we'll just bu
 
 ### What you'll build
 
-You'll build an Android app that will send _ping_ messages to the public endpoint at `ping.awala.services`, and it'll also receive _pong_ messages from said public endpoint. Awala Ping is a hybrid service, but we'll use it as a centralised service here.
+You'll build an Android app that will send _ping_ messages to the public endpoint at `ping.awala.services`, and it'll also receive _pong_ messages from said public endpoint. Awala Ping is a hybrid service, but we'll use it as a centralised service here. Your app will look like this:
 
-As illustrated in the picture below, when you send a ping from your Android app to `ping.awala.services`, the message will travel through the local Awala gateway and then on to the public gateway (at `frankfurt.relaycorp.cloud`, for example).
+![](./images/android-centralised/app-screenshot.png)
+
+As illustrated in the picture below, when you send a ping from your Android app to `ping.awala.services`, the message will pass through the local Awala gateway and then on to the public gateway (at `frankfurt.relaycorp.cloud`, for example).
 
 ![](./images/android-centralised/service-architecture-ping.png)
 
 On the other hand, `ping.awala.services` has to respond to your ping by sending a pong message back via the same gateways as illustrated below:
 
 ![](./images/android-centralised/service-architecture-pong.png)
-
-Finally, your app will look like this:
-
-![](./images/android-centralised/app-screenshot.png)
 
 ### What you'll need
 
@@ -45,15 +43,33 @@ Finally, your app will look like this:
 
 Duration: 0:5:00
 
+Let's create a new project on Android Studio by going to `File` -> `New` -> `New project...`. Once in the wizard, select the empty activity template and click `Next`.
+
 ![](./images/android-centralised/android-studio-project-template.png)
+
+In the final screen, make sure to select Kotlin as the programming language and API 21 as the minimum Android SDK.
 
 ![](./images/android-centralised/android-studio-project-config.png)
 
 ### Define dependencies
 
+Open `app/build.gradle` and add the following inside `dependencies { ... }`:
+
+```groovy
+    // Awala
+    implementation 'tech.relaycorp:relaydroid:1.3.4'
+    // Preferences
+    implementation 'androidx.preference:preference-ktx:1.1.1'
+    implementation 'com.github.tfcporciuncula.flow-preferences:flow-preferences:1.3.4'
+    implementation 'com.squareup.moshi:moshi:1.9.3'
+    implementation 'com.squareup.moshi:moshi-kotlin:1.9.3'
+```
+
+Android Studio should now be recommending that you do a project sync following the change to your build file. Accept it.
+
 ### Implement user interface
 
-Replace `src/main/res/layout/activity_main.xml` with the following:
+Replace the contents of `src/main/res/layout/activity_main.xml` with the following:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
