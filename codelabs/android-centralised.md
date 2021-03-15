@@ -10,13 +10,36 @@ Feedback Link: https://community.awala.network/
 
 ## Overview
 
-Duration: 0:2:00
+Duration: 0:5:00
 
-### What You'll Build
+An _Awala service_ is a collection of apps that exchange mutually-intelligible messages using _endpoints_. Server-side apps exposed as Internet hosts will have _public endpoints_ (e.g., `your-service.com`), whilst all other apps (e.g., mobile, desktop) will have _private endpoints_.
 
-### Prerequisites
+The service is _centralised_ if there's a public endpoint as the sender or recipient of all messages, _decentralised_ if all endpoints are private. Alternatively, if there's a public endpoint involved in some but not necessarily all messages, then the service is _hybrid_.
 
-- [Android Studio](https://developer.android.com/studio) 4.1 or newer.
+Anyone can define Awala services, but to keep this codelab simple, we'll just build an Android app for [Awala Ping](https://specs.awala.network/RS-014), which is a trivial service used to test Awala implementations.
+
+### What you'll build
+
+You'll build an Android app that will send _ping_ messages to the public endpoint at `ping.awala.services`, and it'll also receive _pong_ messages from said public endpoint. Awala Ping is a hybrid service, but we'll use it as a centralised service here.
+
+As illustrated in the picture below, when you send a ping from your Android app to `ping.awala.services`, the message will travel through the local Awala gateway and then on to the public gateway (at `frankfurt.relaycorp.cloud`, for example).
+
+![](./images/android-centralised/service-architecture-ping.png)
+
+On the other hand, `ping.awala.services` has to respond to your ping by sending a pong message back via the same gateways as illustrated below:
+
+![](./images/android-centralised/service-architecture-pong.png)
+
+Finally, your app will look like this:
+
+![](./images/android-centralised/app-screenshot.png)
+
+### What you'll need
+
+- Prior experience building Android apps. If you've never built an Android app, the [first app guide](https://developer.android.com/training/basics/firstapp) will teach you what you need to complete this codelab.
+- [Android Studio](https://developer.android.com/studio) 4+.
+- An Android phone or table running Android 5+.
+- The [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway) installed on that Android device.
 
 ## Set up a new project
 
@@ -91,6 +114,8 @@ Duration: 0:10:00
 ## Receive pongs
 
 Duration: 0:5:00
+
+Awala requires messages bound for private endpoints to be pre-authorised by the recipient in order to prevent abuse, but no authorisation is required when the message is bound for public endpoints.
 
 ## That's it!
 
