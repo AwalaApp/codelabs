@@ -92,8 +92,8 @@ const STAGING_BUCKET = gcs.bucketName(args.stagingBucket || 'DEFAULT_STAGING_BUC
 const VIEWS_FILTER = args.viewsFilter || '*';
 
 // Fathom Analytics
-const FATHOM_SCRIPT_URL = 'https://aardwolf.relaycorp.tech/script.js';
-const FATHOM_SITE = 'TBSIELNB'
+const FATHOM_SCRIPT_URL = args.fathomScriptUrl || null;
+const FATHOM_SITE = args.fathomSite || null;
 
 // clean:build removes the build directory
 gulp.task('clean:build', (callback) => {
@@ -142,7 +142,7 @@ gulp.task('build:codelabs:copy', (done) => {
 });
 gulp.task('build:codelabs', gulp.series(
   'build:codelabs:claat',
-  'build:codelabs:injectFathomScript',
+  ...((FATHOM_SCRIPT_URL === null) ? [] : ['build:codelabs:injectFathomScript']),
   'build:codelabs:copy',
 ));
 

@@ -7,6 +7,8 @@ set -o pipefail
 # Constants
 
 CODELABS_DOMAIN="codelabs.awala.network"
+FATHOM_SCRIPT_URL='https://aardwolf.relaycorp.tech/script.js'
+FATHOM_SITE='TBSIELNB'
 
 # Main
 
@@ -14,8 +16,9 @@ cd site
 
 node_modules/.bin/gulp dist \
   "--base-url=https://${CODELABS_DOMAIN}" \
-  --codelabs-dir=codelabs \
-  --delete-missing
+  --delete-missing \
+  "--fathom-script-url=${FATHOM_SCRIPT_URL}" \
+  "--fathom-site=${FATHOM_SITE}"
 
 echo "${CODELABS_DOMAIN}" > dist/CNAME
 
