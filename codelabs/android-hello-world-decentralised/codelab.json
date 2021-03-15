@@ -3,13 +3,13 @@
   "format": "html",
   "prefix": "https://storage.googleapis.com",
   "mainga": "UA-49880327-14",
-  "updated": "2021-03-14T17:37:29Z",
+  "updated": "2021-03-15T11:25:21Z",
   "id": "android-hello-world-decentralised",
   "duration": 14,
   "title": "Decentralised service, Android",
   "authors": "Gus Narea",
   "summary": "Hello world on Android (decentralised)",
-  "source": "codelabs/android-decentralised.md",
+  "source": "../codelabs/android-decentralised.md",
   "theme": "",
   "status": [
     "hidden"
