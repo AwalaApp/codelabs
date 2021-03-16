@@ -3,22 +3,22 @@ package com.example.pingcodelab
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import java.util.Date
-import kotlinx.android.synthetic.main.activity_main.clear
-import kotlinx.android.synthetic.main.activity_main.pings
-import kotlinx.android.synthetic.main.activity_main.send
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import tech.relaycorp.awaladroid.GatewayClient
+import tech.relaycorp.awaladroid.messaging.OutgoingMessage
+import tech.relaycorp.awaladroid.messaging.ParcelId
+import java.time.ZonedDateTime
+import java.util.*
 
 @ExperimentalCoroutinesApi
 class MainActivity : AppCompatActivity() {
-    private val pingRepository by lazy { (applicationContext as App).pingRepository }
+    private val context by lazy { applicationContext as App }
 
     private val backgroundContext = lifecycleScope.coroutineContext + Dispatchers.IO
     private val backgroundScope = CoroutineScope(backgroundContext)
@@ -28,23 +28,15 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         lifecycleScope.launch {
-            withContext(backgroundContext) {
-                GatewayClient.bind()
-            }
+            // Wait for the app setup to complete if it's still going
+            context.setupDone.receive()
+
             send.isEnabled = true
         }
 
-        pingRepository
+        context.pingRepository
             .observe()
-            .onEach {
-                pings.text = it.joinToString("\n") { message ->
-                    "Ping (sent=${Date(message.sent)}) (received=${
-                        message.received?.let {
-                            Date(message.received)
-                        }
-                    })"
-                }
-            }
+            .onEach { pings.text = formatPings(it) }
             .launchIn(lifecycleScope)
 
         send.setOnClickListener {
@@ -55,10 +47,24 @@ class MainActivity : AppCompatActivity() {
 
         clear.setOnClickListener {
             backgroundScope.launch {
-                pingRepository.clear()
+                context.pingRepository.clear()
             }
         }
     }
+
+    private fun formatPings(it: List<PingMessage>) =
+        it.joinToString("\n---\n") { ping ->
+            val pingDate = Date(ping.sent)
+            val pongDate = ping.received?.let {
+                Date(ping.received)
+            } ?: "Pending"
+            val shortId = ping.id.takeLast(6)
+            listOf(
+                "Ping $shortId:",
+                "- Sent time: $pingDate",
+                "- Pong reception time: $pongDate"
+            ).joinToString("\n")
+        }
 
     private suspend fun sendPing() {
         // TODO
@@ -66,6 +72,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+
+        // Unbind from the gateway if still bound
         GatewayClient.unbind()
     }
 }

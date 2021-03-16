@@ -4,11 +4,10 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.tfcporciuncula.flow.FlowSharedPreferences
 import com.tfcporciuncula.flow.Serializer
-import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 data class PingMessage(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String,
     val sent: Long = System.currentTimeMillis(),
     val received: Long? = null
 )
