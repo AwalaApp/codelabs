@@ -45,7 +45,7 @@ You'll be using the Android endpoint library _[awaladroid](https://github.com/re
 
 ## Set up a new project
 
-Duration: 0:2:00
+Duration: 0:3:00
 
 Let's create a new project on Android Studio by going to `File` -> `New` -> `New project...`. Once in the wizard, select the empty activity template and click `Next`.
 
@@ -64,19 +64,7 @@ Start by adding the following line to `gradle.properties`:
 android.jetifier.blacklist = bcprov-jdk15on-1.*.jar
 ```
 
-Next, open `app/build.gradle` and add the following inside `dependencies { ... }`:
-
-```groovy
-    // Awala
-    implementation 'tech.relaycorp:awaladroid:1.5.1'
-    // Preferences
-    implementation 'androidx.preference:preference-ktx:1.1.1'
-    implementation 'com.github.tfcporciuncula.flow-preferences:flow-preferences:1.3.4'
-    implementation 'com.squareup.moshi:moshi:1.9.3'
-    implementation 'com.squareup.moshi:moshi-kotlin:1.9.3'
-```
-
-Then add the following repositories after `plugins { ... }`:
+Next, open `app/build.gradle` and add the following repositories after `plugins { ... }`:
 
 ```groovy
 repositories {
@@ -85,7 +73,34 @@ repositories {
 }
 ```
 
-Android Studio should now be recommending that you do a project sync following the change to your build file. Accept it.
+Then add the following inside `dependencies { ... }`:
+
+```groovy
+    // Awala
+    implementation 'tech.relaycorp:awaladroid:1.5.4'
+    // Preferences
+    implementation 'androidx.preference:preference-ktx:1.1.1'
+    implementation 'com.github.tfcporciuncula.flow-preferences:flow-preferences:1.3.4'
+    implementation 'com.squareup.moshi:moshi:1.9.3'
+    implementation 'com.squareup.moshi:moshi-kotlin:1.9.3'
+```
+
+Now add the following line inside `plugins { ... }` so that you can use synthetic binding and data binding in this codelab:
+
+```groovy
+    id 'kotlin-android-extensions'
+    id 'kotlin-kapt'
+```
+
+Finally, accept Android Studio's prompt to sync the project.
+
+### Request permission to communicate with the private gateway
+
+Add the following line inside the `&lt;manifest>` of your `AndroidManifest.xml` file for your app to be able to communicate with the [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway):
+
+```xml
+<uses-permission android:name="tech.relaycorp.gateway.SYNC" />
+```
 
 ## Implement the ping repository
 
@@ -102,11 +117,10 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.tfcporciuncula.flow.FlowSharedPreferences
 import com.tfcporciuncula.flow.Serializer
-import java.util.UUID
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 data class PingMessage(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String,
     val sent: Long = System.currentTimeMillis(),
     val received: Long? = null
 )
@@ -176,15 +190,14 @@ import android.app.Application
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tfcporciuncula.flow.FlowSharedPreferences
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import tech.relaycorp.awaladroid.Awala
 
 @ExperimentalCoroutinesApi
 class App : Application() {
+    val setupDone = Channel<Unit>(0)
+
     private val coroutineContext = Dispatchers.IO + SupervisorJob()
 
     lateinit var pingRepository: PingRepository
@@ -199,7 +212,21 @@ class App : Application() {
 
         CoroutineScope(coroutineContext).launch {
             Awala.setup(this@App)
+            setUpEndpoints()
+
+            // Signal that the setup is complete
+            setupDone.offer(Unit)
+
+            collectMessages()
         }
+    }
+
+    private suspend fun setUpEndpoints() {
+        // TODO
+    }
+
+    private fun collectMessages() {
+        // TODO
     }
 }
 ```
@@ -212,7 +239,7 @@ android:name=".App"
 
 ## Implement the main activity
 
-Duration: 0:5:00
+Duration: 0:3:00
 
 ### Define the user interface
 
@@ -270,26 +297,13 @@ You should now see the following when you activate the `Design` view of the acti
 
 ![](./images/android-centralised/activity-design-view.png)
 
-### Apply the kotlin-android-extensions plugin
-
-You'll be using synthetic binding, so you have to apply the `kotlin-android-extensions` plugin in `app/build.gradle` by adding the following line inside `plugins { ... }`:
-
-```groovy
-    id 'kotlin-android-extensions'
-```
-
-Now accept Android Studio's prompt to sync the project.
-
 ### Implement the activity
 
 Your main activity will be responsible for the following:
 
-- _[Binding](https://developer.android.com/guide/components/bound-services)_ to the private gateway when the activity starts and unbinding when it's destroyed.
 - Sending pings when the user taps the "Send ping" button.
 - Displaying the sent pings on the screen, along with the reception time of their respective pong messages.
 - Emptying the ping repository when the user taps the "Clear" button.
-
-Generally speaking, binding must take place at some point after calling `Awala.setup()` (currently done in your `App` class) and before communication starts. You're keeping the app bound to the private gateway throughout the lifetime of the main activity just to keep the codelab simple, but in production you'll want to bind to the private gateway independently of the lifecycle of the main activity.
 
 Replace the contents of `MainActivity.kt` with the following to implement all the above, except for the sending of pings, which you'll do later:
 
@@ -299,22 +313,22 @@ package com.example.pingcodelab
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import java.util.Date
-import kotlinx.android.synthetic.main.activity_main.clear
-import kotlinx.android.synthetic.main.activity_main.pings
-import kotlinx.android.synthetic.main.activity_main.send
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import tech.relaycorp.awaladroid.GatewayClient
+import tech.relaycorp.awaladroid.messaging.OutgoingMessage
+import tech.relaycorp.awaladroid.messaging.ParcelId
+import java.time.ZonedDateTime
+import java.util.*
 
 @ExperimentalCoroutinesApi
 class MainActivity : AppCompatActivity() {
-    private val pingRepository by lazy { (applicationContext as App).pingRepository }
+    private val context by lazy { applicationContext as App }
 
     private val backgroundContext = lifecycleScope.coroutineContext + Dispatchers.IO
     private val backgroundScope = CoroutineScope(backgroundContext)
@@ -324,23 +338,15 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         lifecycleScope.launch {
-            withContext(backgroundContext) {
-                GatewayClient.bind()
-            }
+            // Wait for the app setup to complete if it's still going
+            context.setupDone.receive()
+
             send.isEnabled = true
         }
 
-        pingRepository
+        context.pingRepository
             .observe()
-            .onEach {
-                pings.text = it.joinToString("\n") { message ->
-                    "Ping (sent=${Date(message.sent)}) (received=${
-                        message.received?.let {
-                            Date(message.received)
-                        }
-                    })"
-                }
-            }
+            .onEach { pings.text = formatPings(it) }
             .launchIn(lifecycleScope)
 
         send.setOnClickListener {
@@ -351,33 +357,34 @@ class MainActivity : AppCompatActivity() {
 
         clear.setOnClickListener {
             backgroundScope.launch {
-                pingRepository.clear()
+                context.pingRepository.clear()
             }
         }
     }
 
+    private fun formatPings(it: List<PingMessage>) =
+        it.joinToString("\n---\n") { ping ->
+            val pingDate = Date(ping.sent)
+            val pongDate = ping.received?.let {
+                Date(ping.received)
+            } ?: "Pending"
+            val shortId = ping.id.takeLast(6)
+            listOf(
+                "Ping $shortId:",
+                "- Sent time: $pingDate",
+                "- Pong reception time: $pongDate"
+            ).joinToString("\n")
+        }
+
     private suspend fun sendPing() {
         // TODO
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        GatewayClient.unbind()
     }
 }
 ```
 
-### Request permission to communicate with the private gateway
-
-Add the following line inside the `&lt;manifest>` of your `AndroidManifest.xml` file for your app to be able to communicate with the [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway):
-
-```xml
-<uses-permission android:name="tech.relaycorp.gateway.SYNC" />
-```
-
 ## Configure endpoints
 
-Duration: 0:10:00
+Duration: 0:5:00
 
 Whilst Internet apps communicate with each other using _clients_ and _servers_, Awala apps use _endpoints_. Awala makes extensive use of cryptography to ensure the communication between endpoints is private and secure, which requires some upfront work before the actual communication can start. 
 
@@ -392,29 +399,82 @@ Because you're implementing a centralised service, all the endpoints in the serv
 
 **Apps in a centralised service must be shipped with the data above**. Identity certificates will expire eventually and the operator should also periodically rotate them, so you should make sure that your app is distributed with a relatively recent version of the public endpoint's identity certificate. You may want to retrieve the latest version of the certificate as part of the release process.
 
-To keep things simple in this codelab, you're just going to manually download the identity certificate once and save it on `app/src/main/res/raw/pub-endpoint-identity.der`. If you're running Linux or macOS, the following should work from the root of the project:
+To keep things simple in this codelab, you're just going to manually download the identity certificate once and save it on `app/src/main/res/raw/pub_endpoint_identity.der`. If you're running Linux or macOS, the following should work from the root of the project:
 
 ```shell
 mkdir app/src/main/res/raw
-curl -o app/src/main/res/raw/pub-endpoint-identity.der \
+curl -o app/src/main/res/raw/pub_endpoint_identity.der \
   https://pong-pohttp.awala.services/certificates/identity.der
 ```
 
-With the certificate on disk, it's now time to register the public endpoint the first time the app starts.
+With the certificate on disk, it's now time to register the public endpoint the first time the app starts. You'll also need this endpoint to send pings, so you'll keep a reference to it in the `App` instance so that the main activity can access it -- in production, however, you might want to keep the two separate.
+
+Go back to the `App` class and declare the following field:
+
+```kotlin
+lateinit var recipient: PublicThirdPartyEndpoint
+```
+
+To make sure the field is defined when the app starts, rewrite the `setUpEndpoints` method as follows:
+
+```kotlin
+private suspend fun setUpEndpoints() {
+    // Load the recipient's endpoint if it exists, or import it first if necessary
+    val recipientPublicAddress = "ping.awala.services"
+    recipient = PublicThirdPartyEndpoint.load(recipientPublicAddress)
+        ?: PublicThirdPartyEndpoint.import(
+            recipientPublicAddress,
+            resources.openRawResource(R.raw.pub_endpoint_identity).use {
+                it.readBytes()
+            }
+        )
+}
+```
 
 ### Configure your own endpoint
 
+You now need to create a _first-party endpoint_ to be able to communicate with third-party endpoints like the one you just created for `ping.awala.services`, so let's make that first-party endpoint available when the app starts.
 
+Go back to the `App` class and declare the following field:
+
+```kotlin
+lateinit var sender: FirstPartyEndpoint
+```
+
+Now define the field when the app starts by adding the following to the `setUpEndpoints()` method:
+
+```kotlin
+// Get or create the sender's endpoint
+val globalConfig = getSharedPreferences("config", MODE_PRIVATE)
+val senderPrivateAddress = globalConfig.getString("sender", null)
+sender = if (senderPrivateAddress is String) {
+    FirstPartyEndpoint.load(senderPrivateAddress)!!
+} else {
+    FirstPartyEndpoint.register().also {
+        globalConfig.edit {
+            putString("sender", it.privateAddress)
+        }
+    }
+}
+```
+
+Note that you're using a shared preferences file to store the private address of the first-party endpoint you created, to avoid creating new endpoints each time the app starts. In a real app, however, you can create as many endpoints as you need -- ideally one for each third-party endpoint to keep all communication channels isolated.
 
 ## Send pings
 
 Duration: 0:10:00
+
+- Unbinding from the private gateway [service](https://developer.android.com/guide/components/bound-services) when the app is no longer used.
+
+Generally speaking, binding must take place at some point after calling `Awala.setup()` (currently done in your `App` class) and before communication starts. You're keeping the app bound to the private gateway throughout the lifetime of the main activity just to keep the codelab simple, but in production you'll want to bind to the private gateway independently of the lifecycle of the main activity.
 
 ## Receive pongs
 
 Duration: 0:10:00
 
 Awala requires messages bound for private endpoints to be pre-authorised by the recipient in order to prevent abuse, but no authorisation is required when the message is bound for public endpoints.
+
+Collect messages outside any activity so that they can be processed when the app isn't on the foreground. The private gateway will wake it up.
 
 ## That's it!
 
