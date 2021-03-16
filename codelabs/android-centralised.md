@@ -158,9 +158,63 @@ class PingRepository(
 }
 ```
 
-## Define the user interface
+## Create a custom `Application`
 
-Duration: 0:3:00
+Duration: 0:2:00
+
+You're going to create to a custom `Application` to do two things as soon as the app starts:
+
+- Create a singleton for the ping repository. However, in production you may want to use dependency injection.
+- Set up the Awaladroid library before any communication takes place.
+
+To achieve the above, create a file called `App.kt` in the same directory as `MainActivity.kt` and add the following to the new file:
+
+```kotlin
+package com.example.pingcodelab
+
+import android.app.Application
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import com.tfcporciuncula.flow.FlowSharedPreferences
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import tech.relaycorp.awaladroid.Awala
+
+@ExperimentalCoroutinesApi
+class App : Application() {
+    private val coroutineContext = Dispatchers.IO + SupervisorJob()
+
+    lateinit var pingRepository: PingRepository
+
+    override fun onCreate() {
+        super.onCreate()
+
+        pingRepository = PingRepository(
+            FlowSharedPreferences(getSharedPreferences("ping", MODE_PRIVATE)),
+            Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+        )
+
+        CoroutineScope(coroutineContext).launch {
+            Awala.setup(this@App)
+        }
+    }
+}
+```
+
+Then add the following attribute to the `&lt;application>` element of `AndroidManifest.xml`:
+
+```
+android:name=".App"
+```
+
+## Implement the main activity
+
+Duration: 0:5:00
+
+### Define the user interface
 
 Replace the contents of `src/main/res/layout/activity_main.xml` with the following:
 
@@ -216,67 +270,17 @@ You should now see the following when you activate the `Design` view of the acti
 
 ![](./images/android-centralised/activity-design-view.png)
 
-You'll be using synthetic binding later, so you have to apply the `kotlin-android-extensions` plugin in `app/build.gradle` by adding the following line inside `plugins { ... }`:
+### Apply the kotlin-android-extensions plugin
+
+You'll be using synthetic binding, so you have to apply the `kotlin-android-extensions` plugin in `app/build.gradle` by adding the following line inside `plugins { ... }`:
 
 ```groovy
     id 'kotlin-android-extensions'
 ```
 
-## Create a custom `Application`
+Now accept Android Studio's prompt to sync the project.
 
-Duration: 0:5:00
-
-You're going to create to a custom `Application` to do two things as soon as the app starts:
-
-- Create a singleton for the ping repository. However, in production you may want to use dependency injection.
-- Set up the Awaladroid library before any communication takes place.
-
-To achieve the above, create a file called `App.kt` in the same directory as `MainActivity.kt` and add the following to the new file:
-
-```kotlin
-package com.example.pingcodelab
-
-import android.app.Application
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import com.tfcporciuncula.flow.FlowSharedPreferences
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
-import tech.relaycorp.awaladroid.Awala
-
-@ExperimentalCoroutinesApi
-class App : Application() {
-    private val coroutineContext = Dispatchers.IO + SupervisorJob()
-
-    lateinit var pingRepository: PingRepository
-
-    override fun onCreate() {
-        super.onCreate()
-
-        pingRepository = PingRepository(
-            FlowSharedPreferences(getSharedPreferences("ping", MODE_PRIVATE)),
-            Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
-        )
-
-        CoroutineScope(coroutineContext).launch {
-            Awala.setup(this@App)
-        }
-    }
-}
-```
-
-Then add the following attribute to the `&lt;application>` element of `AndroidManifest.xml`:
-
-```
-android:name=".App"
-```
-
-## Implement the main activity
-
-Duration: 0:5:00
+### Implement the activity
 
 Your main activity will be responsible for the following:
 
