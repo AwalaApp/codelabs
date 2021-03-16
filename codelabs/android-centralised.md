@@ -377,9 +377,11 @@ Add the following line inside the `&lt;manifest>` of your `AndroidManifest.xml` 
 
 ## Configure endpoints
 
+Duration: 0:10:00
+
 Whilst Internet apps communicate with each other using _clients_ and _servers_, Awala apps use _endpoints_. Awala makes extensive use of cryptography to ensure the communication between endpoints is private and secure, which requires some upfront work before the actual communication can start. 
 
-Fortunately, you'll be using the [Android endpoint library](https://github.com/relaycorp/awala-endpoint-android), which abstracts the low-level details so that you can focus on the important features that will make your app stand out from the rest.
+Fortunately, awaladroid abstracts the low-level details so that you can focus on the important features that will make your app stand out from the rest.
 
 ### Configure the third-party endpoint
 
