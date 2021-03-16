@@ -1,6 +1,12 @@
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
+    id 'kotlin-android-extensions'
+}
+
+repositories {
+    maven { url "https://jitpack.io" }
+    maven { url "https://dl.bintray.com/relaycorp/maven" }
 }
 
 android {
