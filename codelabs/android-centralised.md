@@ -24,7 +24,7 @@ You'll build an Android app that will send _ping_ messages to the public endpoin
 
 ![](./images/android-centralised/app-screenshot.png)
 
-As illustrated in the picture below, when you send a ping from your Android app to `ping.awala.services`, the message will pass through the local Awala gateway and then on to the public gateway (at `frankfurt.relaycorp.cloud`, for example).
+As illustrated in the picture below, when you send a ping from your Android app to `ping.awala.services`, the message will pass through the [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway) and then on to the public gateway (at `frankfurt.relaycorp.cloud`, for example).
 
 ![](./images/android-centralised/service-architecture-ping.png)
 
@@ -32,16 +32,20 @@ On the other hand, `ping.awala.services` has to respond to your ping by sending 
 
 ![](./images/android-centralised/service-architecture-pong.png)
 
+Awala requires messages bound for private endpoints (such as the one inside this Android app) to be pre-authorised by the recipient, so that means your ping message will have to include an authorisation for `ping.awala.services` to reply with a pong message. In a regular service, authorisations would be issued once and renewed periodically, but because `ping.awala.services` is stateless, the Android app will have to issue an authorisation each time.
+
+You'll be using the Android endpoint library _[awaladroid](https://github.com/relaycorp/awala-endpoint-android)_ to send and receive messages via the private gateway.
+
 ### What you'll need
 
 - Prior experience building Android apps. If you've never built an Android app, the [first app guide](https://developer.android.com/training/basics/firstapp) will teach you what you need to complete this codelab.
-- [Android Studio](https://developer.android.com/studio) 4+.
+- [Android Studio](https://developer.android.com/studio) 4.1+.
 - An Android phone or table running Android 5+.
 - The [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway) installed on that Android device.
 
 ## Set up a new project
 
-Duration: 0:5:00
+Duration: 0:2:00
 
 Let's create a new project on Android Studio by going to `File` -> `New` -> `New project...`. Once in the wizard, select the empty activity template and click `Next`.
 
@@ -53,7 +57,14 @@ In the final screen, make sure to leave Kotlin as the programming language and A
 
 ### Define dependencies
 
-Open `app/build.gradle` and add the following inside `dependencies { ... }`:
+Start by adding the following line to `gradle.properties`:
+
+```
+# Workaround for https://issuetracker.google.com/issues/159151549
+android.jetifier.blacklist = bcprov-jdk15on-1.*.jar
+```
+
+Next, open `app/build.gradle` and add the following inside `dependencies { ... }`:
 
 ```groovy
     // Awala
@@ -65,9 +76,91 @@ Open `app/build.gradle` and add the following inside `dependencies { ... }`:
     implementation 'com.squareup.moshi:moshi-kotlin:1.9.3'
 ```
 
+Then add the following repositories after `plugins { ... }`:
+
+```groovy
+repositories {
+    maven { url "https://jitpack.io" }
+    maven { url "https://dl.bintray.com/relaycorp/maven" }
+}
+```
+
 Android Studio should now be recommending that you do a project sync following the change to your build file. Accept it.
 
-### Implement user interface
+## Implement the ping repository
+
+Duration: 0:2:00
+
+You're going to use [shared preferences](https://developer.android.com/training/data-storage/shared-preferences) to store data for each ping sent and its corresponding pong message (if any), and each record will be serialised with JSON using the [Moshi library](https://github.com/square/moshi).
+
+To make it easier to manipulate and query the data in the shared preferences file, create a high-level _ping repository_ class using the code below:
+
+```kotlin
+package com.example.pingcodelab
+
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+import com.tfcporciuncula.flow.FlowSharedPreferences
+import com.tfcporciuncula.flow.Serializer
+import java.util.UUID
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+
+data class PingMessage(
+    val id: String = UUID.randomUUID().toString(),
+    val sent: Long = System.currentTimeMillis(),
+    val received: Long? = null
+)
+
+@ExperimentalCoroutinesApi
+class PingRepository(
+    private val flowSharedPreferences: FlowSharedPreferences,
+    private val moshi: Moshi
+) {
+    private val repo by lazy {
+        val serializer = object : Serializer<List<PingMessage>> {
+            private val adapter = moshi.adapter<List<PingMessage>>(
+                Types.newParameterizedType(
+                    List::class.java,
+                    PingMessage::class.java
+                )
+            )
+
+            override fun deserialize(serialized: String) =
+                adapter.fromJson(serialized) ?: emptyList()
+
+            override fun serialize(value: List<PingMessage>) =
+                adapter.toJson(value)
+        }
+
+        flowSharedPreferences.getObject(
+            "pings",
+            serializer,
+            emptyList()
+        )
+    }
+
+    fun observe() = repo.asFlow()
+
+    fun get(id: String) =
+        repo.get().firstOrNull { it.id == id }
+
+    suspend fun set(message: PingMessage) {
+        repo.setAndCommit(
+            repo.get()
+                .filterNot { it.id == message.id }
+                    + message
+        )
+    }
+
+    suspend fun clear() {
+        repo.setAndCommit(emptyList())
+    }
+}
+```
+
+## Define the user interface
+
+Duration: 0:3:00
 
 Replace the contents of `src/main/res/layout/activity_main.xml` with the following:
 
@@ -123,6 +216,153 @@ You should now see the following when you activate the `Design` view of the acti
 
 ![](./images/android-centralised/activity-design-view.png)
 
+You'll be using synthetic binding later, so you have to apply the `kotlin-android-extensions` plugin in `app/build.gradle` by adding the following line inside `plugins { ... }`:
+
+```groovy
+    id 'kotlin-android-extensions'
+```
+
+## Create a custom `Application`
+
+Duration: 0:5:00
+
+You're going to create to a custom `Application` to do two things as soon as the app starts:
+
+- Create a singleton for the ping repository. However, in production you may want to use dependency injection.
+- Set up the Awaladroid library before any communication takes place.
+
+To achieve the above, create a file called `App.kt` in the same directory as `MainActivity.kt` and add the following to the new file:
+
+```kotlin
+package com.example.pingcodelab
+
+import android.app.Application
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import com.tfcporciuncula.flow.FlowSharedPreferences
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import tech.relaycorp.awaladroid.Awala
+
+@ExperimentalCoroutinesApi
+class App : Application() {
+    private val coroutineContext = Dispatchers.IO + SupervisorJob()
+
+    lateinit var pingRepository: PingRepository
+
+    override fun onCreate() {
+        super.onCreate()
+
+        pingRepository = PingRepository(
+            FlowSharedPreferences(getSharedPreferences("ping", MODE_PRIVATE)),
+            Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+        )
+
+        CoroutineScope(coroutineContext).launch {
+            Awala.setup(this@App)
+        }
+    }
+}
+```
+
+Then add the following attribute to the `&lt;application>` element of `AndroidManifest.xml`:
+
+```
+android:name=".App"
+```
+
+## Implement the main activity
+
+Duration: 0:5:00
+
+Your main activity will be responsible for the following:
+
+- _[Binding](https://developer.android.com/guide/components/bound-services)_ to the private gateway when the activity starts and unbinding when it's destroyed.
+- Sending pings when the user taps the "Send ping" button.
+- Displaying the sent pings on the screen, along with the reception time of their respective pong messages.
+- Emptying the ping repository when the user taps the "Clear" button.
+
+Generally speaking, binding must take place at some point after calling `Awala.setup()` (currently done in your `App` class) and before communication starts. You're keeping the app bound to the private gateway throughout the lifetime of the main activity just to keep the codelab simple, but in production you'll want to bind to the private gateway independently of the lifecycle of the main activity.
+
+Replace the contents of `MainActivity.kt` with the following to implement all the above, except for the sending of pings, which you'll do later:
+
+```kotlin
+package com.example.pingcodelab
+
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import java.util.Date
+import kotlinx.android.synthetic.main.activity_main.clear
+import kotlinx.android.synthetic.main.activity_main.pings
+import kotlinx.android.synthetic.main.activity_main.send
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import tech.relaycorp.awaladroid.GatewayClient
+
+@ExperimentalCoroutinesApi
+class MainActivity : AppCompatActivity() {
+    private val pingRepository by lazy { (applicationContext as App).pingRepository }
+
+    private val backgroundContext = lifecycleScope.coroutineContext + Dispatchers.IO
+    private val backgroundScope = CoroutineScope(backgroundContext)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        lifecycleScope.launch {
+            withContext(backgroundContext) {
+                GatewayClient.bind()
+            }
+            send.isEnabled = true
+        }
+
+        pingRepository
+            .observe()
+            .onEach {
+                pings.text = it.joinToString("\n") { message ->
+                    "Ping (sent=${Date(message.sent)}) (received=${
+                        message.received?.let {
+                            Date(message.received)
+                        }
+                    })"
+                }
+            }
+            .launchIn(lifecycleScope)
+
+        send.setOnClickListener {
+            backgroundScope.launch {
+                sendPing()
+            }
+        }
+
+        clear.setOnClickListener {
+            backgroundScope.launch {
+                pingRepository.clear()
+            }
+        }
+    }
+
+    private suspend fun sendPing() {
+        // TODO
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        GatewayClient.unbind()
+    }
+}
+```
+
 ### Request permission to communicate with the private gateway
 
 Add the following line inside the `&lt;manifest>` of your `AndroidManifest.xml` file for your app to be able to communicate with the [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway):
@@ -130,10 +370,6 @@ Add the following line inside the `&lt;manifest>` of your `AndroidManifest.xml` 
 ```xml
 <uses-permission android:name="tech.relaycorp.gateway.SYNC" />
 ```
-
-### Bind to the private gateway
-
-TODO
 
 ## Configure endpoints
 
@@ -148,7 +384,7 @@ Because you're implementing a centralised service, all the endpoints in the serv
 - Public address: `ping.awala.services`.
 - Identity certificate: Can be downloaded from `https://pong-pohttp.awala.services/certificates/identity.der`.
 
-**Apps in a centralised service must be shipped with the data above**. Identity certificates will expire eventually and the operator should also periodically rotate them, so you should make sure that your app is distributed with a relatively recent version of the public endpoint's identity certificate. For example, your release process could automatically download the certificate.
+**Apps in a centralised service must be shipped with the data above**. Identity certificates will expire eventually and the operator should also periodically rotate them, so you should make sure that your app is distributed with a relatively recent version of the public endpoint's identity certificate. You may want to retrieve the latest version of the certificate as part of the release process.
 
 To keep things simple in this codelab, you're just going to manually download the identity certificate once and save it on `app/src/main/res/raw/pub-endpoint-identity.der`. If you're running Linux or macOS, the following should work from the root of the project:
 
