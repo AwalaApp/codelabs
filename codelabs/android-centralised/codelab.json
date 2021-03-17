@@ -3,12 +3,12 @@
   "format": "html",
   "prefix": "https://storage.googleapis.com",
   "mainga": "UA-49880327-14",
-  "updated": "2021-03-15T12:17:37Z",
+  "updated": "2021-03-17T18:57:59Z",
   "id": "android-centralised",
-  "duration": 25,
-  "title": "Build an Android app for a centralised Awala service (working draft)",
+  "duration": 33,
+  "title": "Build an Android app for a centralised Awala service",
   "authors": "Gus Narea",
-  "summary": "Build an Android app for a centralised Awala service (working draft)",
+  "summary": "Build an Android app for a centralised Awala service",
   "source": "../codelabs/android-centralised.md",
   "theme": "",
   "status": [
@@ -20,6 +20,6 @@
   "tags": [
     "medium"
   ],
-  "feedback": "https://community.awala.network/",
+  "feedback": "https://github.com/AwalaNetwork/codelabs",
   "url": "android-centralised"
 }

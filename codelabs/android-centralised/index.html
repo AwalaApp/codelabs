@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
   <meta name="theme-color" content="#4F7DC9">
   <meta charset="UTF-8">
-  <title>Build an Android app for a centralised Awala service (working draft)</title>
+  <title>Build an Android app for a centralised Awala service</title>
   <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
   <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
   <link rel="stylesheet" href="https://storage.googleapis.com/codelab-elements/codelab-elements.css">
@@ -24,27 +24,203 @@
   <google-codelab-analytics gaid="UA-49880327-14"></google-codelab-analytics>
   <google-codelab codelab-gaid=""
                   id="android-centralised"
-                  title="Build an Android app for a centralised Awala service (working draft)"
+                  title="Build an Android app for a centralised Awala service"
                   environment="web"
-                  feedback-link="https://community.awala.network/">
+                  feedback-link="https://github.com/AwalaNetwork/codelabs">
     
-      <google-codelab-step label="Overview" duration="2">
-        <p><strong>This is a working draft</strong></p>
-<h2 is-upgraded>What You&#39;ll Build</h2>
-<h2 is-upgraded>Prerequisites</h2>
+      <google-codelab-step label="Overview" duration="5">
+        <p>An <em>Awala service</em> is a collection of mobile, desktop, server-side and/or CLI apps that exchange mutually-intelligible messages using <em>endpoints</em>. Server-side apps exposed as Internet hosts will have <em>public endpoints</em> (e.g., <code>your-service.com</code>), whilst all other apps (e.g., mobile, desktop) will have <em>private endpoints</em>.</p>
+<p>The service is <em>centralised</em> if there&#39;s a public endpoint as the sender or recipient of all messages, or <em>decentralised</em> if all endpoints are private. Alternatively, if there&#39;s a public endpoint involved in some but not necessarily all messages, then the service is <em>hybrid</em>.</p>
+<p>Anyone can define Awala services, but to keep this codelab simple, we&#39;ll just build an Android app for <a href="https://specs.awala.network/RS-014" target="_blank">Awala Ping</a>, which is a trivial service used to test Awala implementations.</p>
+<h2 is-upgraded>What you&#39;ll build</h2>
+<p>You&#39;ll build an Android app that will send <em>ping</em> messages to the public endpoint at <code>ping.awala.services</code>, and it&#39;ll also receive <em>pong</em> messages from said public endpoint. Awala Ping is a hybrid service, but we&#39;ll use it as a centralised service here. Your app will look like this:</p>
+<p class="image-container"><img src="img/6214ecdb1bfe0126.png"></p>
+<p>As illustrated in the picture below, when you send a ping from your Android app to <code>ping.awala.services</code>, the message will pass through the <a href="https://play.google.com/store/apps/details?id=tech.relaycorp.gateway" target="_blank">private gateway</a> and then on to the public gateway (at <code>frankfurt.relaycorp.cloud</code>, for example).</p>
+<p class="image-container"><img src="img/e365b8401314ec6a.png"></p>
+<p>On the other hand, <code>ping.awala.services</code> has to respond to your ping by sending a pong message back via the same gateways as illustrated below:</p>
+<p class="image-container"><img src="img/e49a74cb42c3ed18.png"></p>
+<p>Awala requires messages bound for private endpoints (such as the one inside this Android app) to be pre-authorised by the recipient, so that means your ping message will have to include an authorisation for <code>ping.awala.services</code> to reply with a pong message. In a regular service, authorisations would be issued once and renewed periodically, but <code>ping.awala.services</code> is stateless, so your app will have to issue an authorisation each time.</p>
+<p>You&#39;ll be using the Android endpoint library <a href="https://github.com/relaycorp/awala-endpoint-android" target="_blank"><em>awaladroid</em></a> to send and receive messages via the private gateway.</p>
+<h2 is-upgraded>What you&#39;ll need</h2>
 <ul>
-<li><a href="https://developer.android.com/studio" target="_blank">Android Studio</a> 4.1 or newer.</li>
+<li>Prior experience building Android apps. If you&#39;ve never built an Android app, the <a href="https://developer.android.com/training/basics/firstapp" target="_blank">first app guide</a> will teach you what you need to complete this codelab.</li>
+<li><a href="https://developer.android.com/studio" target="_blank">Android Studio</a> 4.1+.</li>
+<li>An Android phone or table running Android 5+.</li>
+<li>The <a href="https://play.google.com/store/apps/details?id=tech.relaycorp.gateway" target="_blank">private gateway</a> installed on that Android device.</li>
 </ul>
+<h2 is-upgraded>In case you need help</h2>
+<p>If you have any issues in the course of this codelab, please post a message on <a href="https://community.awala.network/" target="_blank">our forum</a> and we&#39;ll help you out! You can also check out the <a href="https://github.com/AwalaNetwork/codelabs/tree/main/examples/android-centralised" target="_blank">final version of the app you&#39;re going to build</a>.</p>
 
 
       </google-codelab-step>
     
-      <google-codelab-step label="Set up a new project" duration="5">
-        <p class="image-container"><img src="img/311f4097b75ccda9.png"></p>
-<p class="image-container"><img src="img/8ae240bd0a67217.png"></p>
+      <google-codelab-step label="Set up a new project" duration="3">
+        <p>Let&#39;s create a new project on Android Studio by going to <code>File</code> -&gt; <code>New</code> -&gt; <code>New project...</code>. Once in the wizard, select the empty activity template and click <code>Next</code>.</p>
+<p class="image-container"><img src="img/311f4097b75ccda9.png"></p>
+<p>In the final screen, make sure to leave Kotlin as the programming language and API 21 as the minimum Android SDK.</p>
+<p class="image-container"><img src="img/cd2404e8b901a32d.png"></p>
 <h2 is-upgraded>Define dependencies</h2>
-<h2 is-upgraded>Implement user interface</h2>
-<p>Replace <code>src/main/res/layout/activity_main.xml</code> with the following:</p>
+<p>Start by adding the following line to <code>gradle.properties</code>:</p>
+<pre><code># Workaround for https://issuetracker.google.com/issues/159151549
+android.jetifier.blacklist = bcprov-jdk15on-1.*.jar
+</code></pre>
+<p>Next, open <code>app/build.gradle</code> and add the following repositories after <code>plugins { ... }</code>:</p>
+<pre><code language="language-groovy" class="language-groovy">repositories {
+    maven { url &#34;https://jitpack.io&#34; }
+    maven { url &#34;https://dl.bintray.com/relaycorp/maven&#34; }
+}
+</code></pre>
+<p>Next, add the following line to the <code>compileOptions</code> inside <code>android { ... }</code> so that you can <a href="https://developer.android.com/studio/write/java8-support" target="_blank">use Java 8 features</a> (e.g., <code>ZonedDateTime</code>):</p>
+<pre><code language="language-groovy" class="language-groovy">coreLibraryDesugaringEnabled true
+</code></pre>
+<p>Then add the following inside <code>dependencies { ... }</code>:</p>
+<pre><code language="language-groovy" class="language-groovy">    // Support modern Java classes (e.g., ZonedDateTime)
+    coreLibraryDesugaring &#39;com.android.tools:desugar_jdk_libs:1.1.5&#39;
+    // Awala
+    implementation &#39;tech.relaycorp:awaladroid:1.5.6&#39;
+    // Preferences
+    implementation &#39;androidx.preference:preference-ktx:1.1.1&#39;
+    implementation &#39;com.github.tfcporciuncula.flow-preferences:flow-preferences:1.3.4&#39;
+    implementation &#39;com.squareup.moshi:moshi:1.9.3&#39;
+    implementation &#39;com.squareup.moshi:moshi-kotlin:1.9.3&#39;
+</code></pre>
+<p>Now add the following line inside <code>plugins { ... }</code> so that you can use synthetic binding and data binding in this codelab:</p>
+<pre><code language="language-groovy" class="language-groovy">    id &#39;kotlin-android-extensions&#39;
+    id &#39;kotlin-kapt&#39;
+</code></pre>
+<p>Finally, accept Android Studio&#39;s prompt to sync the project.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Implement the ping repository" duration="2">
+        <p>You&#39;re going to use <a href="https://developer.android.com/training/data-storage/shared-preferences" target="_blank">shared preferences</a> to store data for each ping sent and its corresponding pong message (if any), and each record will be serialised with JSON using the <a href="https://github.com/square/moshi" target="_blank">Moshi library</a>.</p>
+<p>To make it easier to manipulate and query the data in the shared preferences file, create a high-level <em>ping repository</em> class using the code below:</p>
+<pre><code language="language-kotlin" class="language-kotlin">package com.example.pingcodelab
+
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+import com.tfcporciuncula.flow.FlowSharedPreferences
+import com.tfcporciuncula.flow.Serializer
+
+data class Ping(
+    val id: String,
+    val pingDate: Long = System.currentTimeMillis(),
+    val pongDate: Long? = null
+)
+
+class PingRepository(
+    private val flowSharedPreferences: FlowSharedPreferences,
+    private val moshi: Moshi
+) {
+    private val repo by lazy {
+        val serializer = object : Serializer&lt;List&lt;Ping&gt;&gt; {
+            private val adapter = moshi.adapter&lt;List&lt;Ping&gt;&gt;(
+                Types.newParameterizedType(
+                    List::class.java,
+                    Ping::class.java
+                )
+            )
+
+            override fun deserialize(serialized: String) =
+                adapter.fromJson(serialized) ?: emptyList()
+
+            override fun serialize(value: List&lt;Ping&gt;) =
+                adapter.toJson(value)
+        }
+
+        flowSharedPreferences.getObject(
+            &#34;pings&#34;,
+            serializer,
+            emptyList()
+        )
+    }
+
+    fun observe() = repo.asFlow()
+
+    fun get(id: String) =
+        repo.get().first { it.id == id }
+
+    suspend fun set(message: Ping) {
+        repo.setAndCommit(
+            repo.get()
+                .filterNot { it.id == message.id }
+                    + message
+        )
+    }
+
+    suspend fun clear() {
+        repo.setAndCommit(emptyList())
+    }
+}
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Create a custom Application" duration="2">
+        <p>You&#39;re going to create to a custom <code>Application</code> to do two things as soon as the app starts:</p>
+<ul>
+<li>Create a singleton for the ping repository. However, in production you may want to use dependency injection.</li>
+<li>Set up the Awaladroid library before any communication takes place.</li>
+</ul>
+<p>To achieve the above, create a file called <code>App.kt</code> in the same directory as <code>MainActivity.kt</code> and add the following to the new file:</p>
+<pre><code language="language-kotlin" class="language-kotlin">package com.example.pingcodelab
+
+import android.app.Application
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import com.tfcporciuncula.flow.FlowSharedPreferences
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import tech.relaycorp.awaladroid.Awala
+
+@ExperimentalCoroutinesApi
+class App : Application() {
+    val setupDone = Channel&lt;Unit&gt;(0)
+
+    private val coroutineContext = Dispatchers.IO + SupervisorJob()
+
+    lateinit var pingRepository: PingRepository
+
+    override fun onCreate() {
+        super.onCreate()
+
+        pingRepository = PingRepository(
+            FlowSharedPreferences(getSharedPreferences(&#34;ping&#34;, MODE_PRIVATE)),
+            Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+        )
+
+        CoroutineScope(coroutineContext).launch {
+            Awala.setup(this@App)
+            setUpEndpoints()
+
+            // Signal that the setup is complete
+            setupDone.offer(Unit)
+
+            collectMessages()
+        }
+    }
+
+    private suspend fun setUpEndpoints() {
+        // TODO
+    }
+
+    private fun collectMessages() {
+        // TODO
+    }
+}
+</code></pre>
+<p>Then add the following attribute to the <code>&amp;lt;application&gt;</code> element of <code>AndroidManifest.xml</code>:</p>
+<pre><code>android:name=&#34;.App&#34;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Implement the main activity" duration="3">
+        <h2 is-upgraded>Define the user interface</h2>
+<p>Replace the contents of <code>src/main/res/layout/activity_main.xml</code> with the following:</p>
 <pre><code language="language-xml" class="language-xml">&lt;?xml version=&#34;1.0&#34; encoding=&#34;utf-8&#34;?&gt;
 &lt;LinearLayout xmlns:android=&#34;http://schemas.android.com/apk/res/android&#34;
               xmlns:tools=&#34;http://schemas.android.com/tools&#34;
@@ -80,6 +256,7 @@
                 android:layout_height=&#34;wrap_content&#34;
                 android:layout_gravity=&#34;top|end&#34;
                 android:layout_marginHorizontal=&#34;8dp&#34;
+                android:backgroundTint=&#34;@color/design_default_color_background&#34;
                 android:text=&#34;Clear&#34; /&gt;
 
         &lt;com.google.android.material.button.MaterialButton
@@ -87,30 +264,283 @@
                 android:layout_width=&#34;wrap_content&#34;
                 android:layout_height=&#34;wrap_content&#34;
                 android:layout_marginHorizontal=&#34;8dp&#34;
+                android:enabled=&#34;false&#34;
                 android:text=&#34;Send Ping&#34; /&gt;
     &lt;/LinearLayout&gt;
 &lt;/LinearLayout&gt;
 </code></pre>
-<p>You should now see the following when you activate the <code>Design</code> view of the activity:</p>
-<p class="image-container"><img src="img/39836944caaa0e20.png"></p>
+<h2 is-upgraded>Implement the activity</h2>
+<p>Your main activity will be responsible for the following:</p>
+<ul>
+<li>Sending pings when the user taps the &#34;Send ping&#34; button.</li>
+<li>Displaying the sent pings on the screen, along with the reception time of their respective pong messages.</li>
+<li>Emptying the ping repository when the user taps the &#34;Clear&#34; button.</li>
+</ul>
+<p>Replace the contents of <code>MainActivity.kt</code> with the following to implement all the above, except for the sending of pings, which you&#39;ll do later:</p>
+<pre><code language="language-kotlin" class="language-kotlin">package com.example.pingcodelab
+
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import tech.relaycorp.awaladroid.GatewayClient
+import tech.relaycorp.awaladroid.messaging.OutgoingMessage
+import tech.relaycorp.awaladroid.messaging.ParcelId
+import java.time.ZonedDateTime
+import java.util.*
+
+@ExperimentalCoroutinesApi
+class MainActivity : AppCompatActivity() {
+    private val context by lazy { applicationContext as App }
+
+    private val backgroundContext = lifecycleScope.coroutineContext + Dispatchers.IO
+    private val backgroundScope = CoroutineScope(backgroundContext)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        lifecycleScope.launch {
+            // Wait for the app setup to complete if it&#39;s still going
+            context.setupDone.receive()
+
+            send.isEnabled = true
+        }
+
+        context.pingRepository
+            .observe()
+            .onEach { pings.text = formatPings(it) }
+            .launchIn(lifecycleScope)
+
+        send.setOnClickListener {
+            backgroundScope.launch {
+                sendPing()
+            }
+        }
+
+        clear.setOnClickListener {
+            backgroundScope.launch {
+                context.pingRepository.clear()
+            }
+        }
+    }
+
+    private fun formatPings(it: List&lt;Ping&gt;) =
+        it.joinToString(&#34;\n---\n&#34;) { ping -&gt;
+            val pingDate = Date(ping.date)
+            val pongDate = ping.pongDate?.let {
+                Date(ping.received)
+            } ?: &#34;Pending&#34;
+            val shortId = ping.id.takeLast(6)
+            listOf(
+                &#34;Ping $shortId:&#34;,
+                &#34;- Sent time: $pingDate&#34;,
+                &#34;- Pong reception time: $pongDate&#34;
+            ).joinToString(&#34;\n&#34;)
+        }
+
+    private suspend fun sendPing() {
+        // TODO
+    }
+}
+</code></pre>
+<h2 is-upgraded>Install the app</h2>
+<p>Install the app on your Android device to make sure everything is working so far. The app should look like this, although buttons wouldn&#39;t be doing anything yet:</p>
+<p class="image-container"><img src="img/ba91df0d53b067a2.png"></p>
 
 
       </google-codelab-step>
     
-      <google-codelab-step label="Send pings" duration="10">
-        
+      <google-codelab-step label="Configure endpoints" duration="5">
+        <p>Whilst Internet apps communicate with each other using <em>clients</em> and <em>servers</em>, Awala apps use <em>endpoints</em>. Awala makes extensive use of cryptography to ensure the communication between endpoints is private and secure, which requires some upfront work before the actual communication can start.</p>
+<p>Fortunately, awaladroid abstracts the low-level details so that you can focus on the important features that will make your app stand out from the rest.</p>
+<h2 is-upgraded>Configure the third-party endpoint</h2>
+<p>Because you&#39;re implementing a centralised service, all the endpoints in the service will be communicating with a specific public endpoint, so you&#39;ll need the organisation operating the public endpoint to give you some information about it. In this case, you&#39;ll use a public endpoint operated by Relaycorp, whose parameters are:</p>
+<ul>
+<li>Public address: <code>ping.awala.services</code>.</li>
+<li>Identity certificate: Can be downloaded from <code>https://pong-pohttp.awala.services/certificates/identity.der</code>.</li>
+</ul>
+<p><strong>Apps in a centralised service must be shipped with the data above</strong>. Identity certificates will expire eventually and the operator should also periodically rotate them, so you should make sure that your app is distributed with a relatively recent version of the public endpoint&#39;s identity certificate. You may want to retrieve the latest version of the certificate as part of the release process.</p>
+<p>To keep things simple in this codelab, you&#39;re just going to manually download the identity certificate once and save it on <code>app/src/main/res/raw/pub_endpoint_identity.der</code>. If you&#39;re running Linux or macOS, the following should work from the root of the project:</p>
+<pre><code language="language-shell" class="language-shell">mkdir app/src/main/res/raw
+curl -o app/src/main/res/raw/pub_endpoint_identity.der \
+  https://pong-pohttp.awala.services/certificates/identity.der
+</code></pre>
+<p>With the certificate on disk, it&#39;s now time to register the public endpoint the first time the app starts. You&#39;ll also need this endpoint to send pings, so you&#39;ll keep a reference to it in the <code>App</code> instance so that the main activity can access it – in production, however, you might want to keep the two separate.</p>
+<p>Go back to the <code>App</code> class and declare the following field:</p>
+<pre><code language="language-kotlin" class="language-kotlin">lateinit var recipient: PublicThirdPartyEndpoint
+</code></pre>
+<p>To make sure the field is defined when the app starts, rewrite the <code>setUpEndpoints</code> method as follows:</p>
+<pre><code language="language-kotlin" class="language-kotlin">private suspend fun setUpEndpoints() {
+    // Load the recipient&#39;s endpoint if it exists, or import it first if necessary
+    val recipientPublicAddress = &#34;ping.awala.services&#34;
+    recipient = PublicThirdPartyEndpoint.load(recipientPublicAddress)
+        ?: PublicThirdPartyEndpoint.import(
+            recipientPublicAddress,
+            resources.openRawResource(R.raw.pub_endpoint_identity).use {
+                it.readBytes()
+            }
+        )
+}
+</code></pre>
+<h2 is-upgraded>Configure your own endpoint</h2>
+<p>You now need to create a <em>first-party endpoint</em> to be able to communicate with third-party endpoints like the one you just created for <code>ping.awala.services</code>, so let&#39;s make that first-party endpoint available when the app starts.</p>
+<p>Go back to the <code>App</code> class and declare the following field:</p>
+<pre><code language="language-kotlin" class="language-kotlin">lateinit var sender: FirstPartyEndpoint
+</code></pre>
+<p>Now define the field when the app starts by adding the following to the <code>setUpEndpoints()</code> method:</p>
+<pre><code language="language-kotlin" class="language-kotlin">// Get or create the sender&#39;s endpoint
+val globalConfig = getSharedPreferences(&#34;config&#34;, MODE_PRIVATE)
+val senderPrivateAddress = globalConfig.getString(&#34;sender&#34;, null)
+sender = if (senderPrivateAddress is String) {
+    FirstPartyEndpoint.load(senderPrivateAddress)!!
+} else {
+    FirstPartyEndpoint.register().also {
+        globalConfig.edit {
+            putString(&#34;sender&#34;, it.privateAddress)
+        }
+    }
+}
+</code></pre>
+<p>Note that you&#39;re using a shared preferences file to store the private address of the first-party endpoint you created, to avoid creating new endpoints each time the app starts. In a real app, however, you can create as many endpoints as you need – ideally one for each third-party endpoint to keep all communication channels isolated.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Send pings" duration="5">
+        <p>You&#39;ve now completed the groundwork, so it&#39;s time to start sending pings!</p>
+<p>Pings are JSON-serialised messages that contain a unique identifier and the authorisation for the recipient to reply with a pong message, as illustrated below:</p>
+<pre><code language="language-json" class="language-json">{
+  &#34;id&#34;: &#34;&lt;The ping id&gt;&#34;,
+  &#34;pda&#34;: &#34;&lt;The Parcel Delivery Authorisation for the recipient (base64-encoded)&gt;&#34;,
+  &#34;pda_chain&#34;: [
+    &#34;&lt;PDA Chain, Certificate #1 (base64-encoded)&gt;&#34;,
+    &#34;...&#34;
+  ]
+}
+</code></pre>
+<p>Using Awala&#39;s nomenclature, each ping is a <em>service message</em> – as is each pong. Each message is made of a <em>type</em> (like <code>application/vnd.awala.ping-v1.ping</code>) and its <em>content</em> (like the JSON document above). The content is binary so that you can transmit textual and binary data.</p>
+<p>A service message isn&#39;t transmitted as is: Instead, it&#39;s encrypted and put inside a <em>parcel</em>, which contains just enough information for gateways to route it and ensure that only pre-authorised messages are delivered.</p>
+<p>Fortunately, awaladroid takes care of the cryptography and (un)sealing parcels, so that you can focus on the important things.</p>
+<h2 is-upgraded>Serialise ping messages</h2>
+<p>Let&#39;s define the JSON serialisation routine first. Create a new file called <code>PingSerialization.kt</code> in the same package as the main activity, and add the following to it:</p>
+<pre><code language="language-kotlin" class="language-kotlin">package com.example.pingcodelab
+
+import android.util.Base64
+import org.json.JSONArray
+import org.json.JSONObject
+
+internal fun serializePingMessage(
+    pingId: String,
+    pda: ByteArray,
+    pdaChain: List&lt;ByteArray&gt;
+): ByteArray {
+    val pingJSON = JSONObject()
+    pingJSON.put(&#34;id&#34;, pingId)
+    pingJSON.put(&#34;pda&#34;, base64Encode(pda))
+    pingJSON.put(&#34;pda_chain&#34;, JSONArray(pdaChain.map { base64Encode(it) }))
+    val pingJSONString = pingJSON.toString()
+    return pingJSONString.toByteArray()
+}
+
+private fun base64Encode(input: ByteArray): String =
+    Base64.encodeToString(input, Base64.DEFAULT)
+</code></pre>
+<h2 is-upgraded>Send service message</h2>
+<p>The private gateway runs as a <a href="https://developer.android.com/guide/components/bound-services" target="_blank">bound service</a> and you&#39;re responsible for binding to it whenever you need to send messages. Generally speaking, binding must take place at some point after calling <code>Awala.setup()</code> (currently done in your <code>App</code> class) and before communication starts.</p>
+<p>It&#39;s up to you whether to stay bound indefinitely or only bind when necessary, but in this codelab you&#39;re going to defer the binding until the first message is sent.</p>
+<p>Go back to the <code>MainActivity</code> class and rewrite the <code>sendPing()</code> method as follows:</p>
+<pre><code language="language-kotlin" class="language-kotlin">private suspend fun sendPing() {
+    // Bind to the gateway if not already bound
+    GatewayClient.bind()
+
+    val pingId = UUID.randomUUID().toString()
+    val authorization = context.sender.issueAuthorization(
+        context.recipient,
+        ZonedDateTime.now().plusDays(3)
+    )
+    val pingMessageSerialized = serializePingMessage(
+        pingId,
+        authorization.pdaSerialized,
+        authorization.pdaChainSerialized
+    )
+    val outgoingMessage = OutgoingMessage.build(
+        &#34;application/vnd.relaynet.ping-v1.ping&#34;,
+        pingMessageSerialized,
+        context.sender,
+        context.recipient
+    )
+    GatewayClient.sendMessage(outgoingMessage)
+    val pingMessage = Ping(pingId)
+    context.pingRepository.set(pingMessage)
+}
+</code></pre>
+<p><code>GatewayClient.bind()</code> is idempotent, so nothing bad would happen if the app is already bound to the gateway.</p>
+<h2 is-upgraded>Unbind from the gateway</h2>
+<p>To unbind from the gateway when the app is no longer on the foreground, go back to the <code>MainActivity</code> class and override the <code>onDestroy()</code> method as follows:</p>
+<pre><code language="language-kotlin" class="language-kotlin">override fun onDestroy() {
+    super.onDestroy()
+
+    // Unbind from the gateway if still bound
+    GatewayClient.unbind()
+}
+</code></pre>
+<p>Note that <code>GatewayClient.unbind()</code> is idempotent too.</p>
+<h2 is-upgraded>Test it!</h2>
+<p>Install the app and start sending pings. It should look like this:</p>
+<p class="image-container"><img src="img/a118c071a239c6de.png"></p>
+<p>You should be getting pongs at this point – They&#39;re just not displayed on the screen just yet.</p>
+
 
       </google-codelab-step>
     
       <google-codelab-step label="Receive pongs" duration="5">
-        
+        <p>You&#39;re now going to update the data in the ping repository to set the time when the app received each pong message. The <code>MainActivity</code> is programmed to update the screen whenever the repository changes, so those changes should be reflected on the screen almost instantly.</p>
+<h2 is-upgraded>Deserialise pong messages</h2>
+<p>The content of the pong message is just the respective ping id – no JSON this time. So go back to the <code>PingSerialization.kt</code> file and add the following:</p>
+<pre><code language="language-kotlin" class="language-kotlin">internal fun extractPingIdFromPongMessage(pongMessageSerialized: ByteArray): String {
+    return pongMessageSerialized.toString(Charset.defaultCharset())
+}
+</code></pre>
+<h2 is-upgraded>Collect service messages</h2>
+<p>When the private gateway receives a message bound for one of the endpoints inside your app, it will notify your app by binding to it – Android will then wake up your app in the background unless it&#39;s already running in the foreground.</p>
+<p>Before awaladroid can actually collect messages, you have to define how those messages should be processed. In this codelab you&#39;re going to do that as soon as the app starts, so that you can process pong messages even when your app isn&#39;t in use.</p>
+<p>Go to the <code>App</code> class and override the <code>collectMessages()</code> method as follows:</p>
+<pre><code language="language-kotlin" class="language-kotlin">private suspend fun collectMessages() {
+    GatewayClient.receiveMessages().collect {
+        val pingId = extractPingIdFromPongMessage(it.content)
+        val pingMessage = pingRepository.get(pingId)
+        pingRepository.set(pingMessage.copy(pongDate = System.currentTimeMillis()))
+
+        it.ack()
+    }
+}
+</code></pre>
+<p>Note that you&#39;re having to call the <code>ack()</code> method on the incoming message as soon as you finish processing it to instruct the gateway to delete its copy of the parcel. The gateway will continue to send you that message until you acknowledge it. If the processing is expensive and/or you may get many messages, you may want to add incoming messages to a background queue and acknowledge immediately.</p>
+<p>The incoming message exposes the <code>type</code> of the message (e.g., <code>application/vnd.awala.ping-v1.pong</code>), as well as the third-party <code>sender</code> and the first-party <code>recipient</code> endpoints.</p>
+<p>You&#39;ll notice that you&#39;re not binding to the gateway: That&#39;s because awaladroid will do it on demand when new incoming messages are available.</p>
+<h2 is-upgraded>Test it again!</h2>
+<p>Reinstall the app and try to send pings again. If everything works as expected, you should now see the time when the respective pong messages were received:</p>
+<p class="image-container"><img src="img/1a7b98dafe99838c.png"></p>
+
 
       </google-codelab-step>
     
       <google-codelab-step label="That&#39;s it!" duration="3">
-        <h2 is-upgraded>What&#39;s next?</h2>
-<h2 is-upgraded>Further reading</h2>
-<h2 is-upgraded>Reference documentation</h2>
+        <p>Well done! You&#39;ve just built an Android app for a centralised Awala service.</p>
+<h2 is-upgraded>What&#39;s next?</h2>
+<ul>
+<li>Learn more about the <a href="https://awala.network/service-providers/implementation/architecture" target="_blank">architecture of Awala services</a>.</li>
+<li>Read the <a href="https://docs.relaycorp.tech/awala-endpoint-android/" target="_blank">API documentation for awaladroid</a>.</li>
+<li><a href="https://community.awala.network/" target="_blank">Join the Awala community</a> and give us some feedback on the codelab.</li>
+<li><a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fawala.network%2Fservice-providers%2F&via=AwalaNetwork&text=I%27ve%20just%20built%20an%20app%20that%20can%20sync%20with%20the%20Internet%20even%20if%20the%20user%20is%20disconnected%20from%20it%21" target="_blank">Share what you&#39;ve just done on Twitter</a>.</li>
+</ul>
 
 
       </google-codelab-step>
