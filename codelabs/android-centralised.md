@@ -14,7 +14,7 @@ Duration: 0:5:00
 
 An _Awala service_ is a collection of mobile, desktop, server-side and/or CLI apps that exchange mutually-intelligible messages using _endpoints_. Server-side apps exposed as Internet hosts will have _public endpoints_ (e.g., `your-service.com`), whilst all other apps (e.g., mobile, desktop) will have _private endpoints_.
 
-The service is _centralised_ if there's a public endpoint as the sender or recipient of all messages, _decentralised_ if all endpoints are private. Alternatively, if there's a public endpoint involved in some but not necessarily all messages, then the service is _hybrid_.
+The service is _centralised_ if there's a public endpoint as the sender or recipient of all messages, or _decentralised_ if all endpoints are private. Alternatively, if there's a public endpoint involved in some but not necessarily all messages, then the service is _hybrid_.
 
 Anyone can define Awala services, but to keep this codelab simple, we'll just build an Android app for [Awala Ping](https://specs.awala.network/RS-014), which is a trivial service used to test Awala implementations.
 
@@ -32,7 +32,7 @@ On the other hand, `ping.awala.services` has to respond to your ping by sending 
 
 ![](./images/android-centralised/service-architecture-pong.png)
 
-Awala requires messages bound for private endpoints (such as the one inside this Android app) to be pre-authorised by the recipient, so that means your ping message will have to include an authorisation for `ping.awala.services` to reply with a pong message. In a regular service, authorisations would be issued once and renewed periodically, but because `ping.awala.services` is stateless, the Android app will have to issue an authorisation each time.
+Awala requires messages bound for private endpoints (such as the one inside this Android app) to be pre-authorised by the recipient, so that means your ping message will have to include an authorisation for `ping.awala.services` to reply with a pong message. In a regular service, authorisations would be issued once and renewed periodically, but `ping.awala.services` is stateless, so your app will have to issue an authorisation each time.
 
 You'll be using the Android endpoint library _[awaladroid](https://github.com/relaycorp/awala-endpoint-android)_ to send and receive messages via the private gateway.
 
@@ -42,6 +42,10 @@ You'll be using the Android endpoint library _[awaladroid](https://github.com/re
 - [Android Studio](https://developer.android.com/studio) 4.1+.
 - An Android phone or table running Android 5+.
 - The [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway) installed on that Android device.
+
+### In case you need help
+
+If you have any issues in the course of this codelab, please post a message on [our forum](https://community.awala.network/) and we'll help you out! You can also check out the [final version of the app you're going to build](https://github.com/AwalaNetwork/codelabs/tree/main/examples/android-centralised).
 
 ## Set up a new project
 
@@ -73,11 +77,19 @@ repositories {
 }
 ```
 
+Next, add the following line to the `compileOptions` inside `android { ... }` so that you can [use Java 8 features](https://developer.android.com/studio/write/java8-support) (e.g., `ZonedDateTime`):
+
+```groovy
+coreLibraryDesugaringEnabled true
+```
+
 Then add the following inside `dependencies { ... }`:
 
 ```groovy
+    // Support modern Java classes (e.g., ZonedDateTime)
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
     // Awala
-    implementation 'tech.relaycorp:awaladroid:1.5.4'
+    implementation 'tech.relaycorp:awaladroid:1.5.6'
     // Preferences
     implementation 'androidx.preference:preference-ktx:1.1.1'
     implementation 'com.github.tfcporciuncula.flow-preferences:flow-preferences:1.3.4'
@@ -117,32 +129,30 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.tfcporciuncula.flow.FlowSharedPreferences
 import com.tfcporciuncula.flow.Serializer
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-data class PingMessage(
+data class Ping(
     val id: String,
-    val sent: Long = System.currentTimeMillis(),
-    val received: Long? = null
+    val pingDate: Long = System.currentTimeMillis(),
+    val pongDate: Long? = null
 )
 
-@ExperimentalCoroutinesApi
 class PingRepository(
     private val flowSharedPreferences: FlowSharedPreferences,
     private val moshi: Moshi
 ) {
     private val repo by lazy {
-        val serializer = object : Serializer<List<PingMessage>> {
-            private val adapter = moshi.adapter<List<PingMessage>>(
+        val serializer = object : Serializer<List<Ping>> {
+            private val adapter = moshi.adapter<List<Ping>>(
                 Types.newParameterizedType(
                     List::class.java,
-                    PingMessage::class.java
+                    Ping::class.java
                 )
             )
 
             override fun deserialize(serialized: String) =
                 adapter.fromJson(serialized) ?: emptyList()
 
-            override fun serialize(value: List<PingMessage>) =
+            override fun serialize(value: List<Ping>) =
                 adapter.toJson(value)
         }
 
@@ -156,9 +166,9 @@ class PingRepository(
     fun observe() = repo.asFlow()
 
     fun get(id: String) =
-        repo.get().firstOrNull { it.id == id }
+        repo.get().first { it.id == id }
 
-    suspend fun set(message: PingMessage) {
+    suspend fun set(message: Ping) {
         repo.setAndCommit(
             repo.get()
                 .filterNot { it.id == message.id }
@@ -281,6 +291,7 @@ Replace the contents of `src/main/res/layout/activity_main.xml` with the followi
                 android:layout_height="wrap_content"
                 android:layout_gravity="top|end"
                 android:layout_marginHorizontal="8dp"
+                android:backgroundTint="@color/design_default_color_background"
                 android:text="Clear" />
 
         <com.google.android.material.button.MaterialButton
@@ -288,6 +299,7 @@ Replace the contents of `src/main/res/layout/activity_main.xml` with the followi
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="8dp"
+                android:enabled="false"
                 android:text="Send Ping" />
     </LinearLayout>
 </LinearLayout>
@@ -362,10 +374,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun formatPings(it: List<PingMessage>) =
+    private fun formatPings(it: List<Ping>) =
         it.joinToString("\n---\n") { ping ->
-            val pingDate = Date(ping.sent)
-            val pongDate = ping.received?.let {
+            val pingDate = Date(ping.date)
+            val pongDate = ping.pongDate?.let {
                 Date(ping.received)
             } ?: "Pending"
             val shortId = ping.id.takeLast(6)
@@ -381,6 +393,12 @@ class MainActivity : AppCompatActivity() {
     }
 }
 ```
+
+### Install the app
+
+Install the app on your Android device to make sure everything is working so far. The app should look like this, although buttons wouldn't be doing anything yet:
+
+![](images/android-centralised/main-activity-no-functionality.png)
 
 ## Configure endpoints
 
@@ -462,19 +480,165 @@ Note that you're using a shared preferences file to store the private address of
 
 ## Send pings
 
-Duration: 0:10:00
+Duration: 0:5:00
 
-- Unbinding from the private gateway [service](https://developer.android.com/guide/components/bound-services) when the app is no longer used.
+You've now completed the groundwork, so it's time to start sending pings!
 
-Generally speaking, binding must take place at some point after calling `Awala.setup()` (currently done in your `App` class) and before communication starts. You're keeping the app bound to the private gateway throughout the lifetime of the main activity just to keep the codelab simple, but in production you'll want to bind to the private gateway independently of the lifecycle of the main activity.
+Pings are JSON-serialised messages that contain a unique identifier and the authorisation for the recipient to reply with a pong message, as illustrated below:
+
+```json
+{
+  "id": "<The ping id>",
+  "pda": "<The Parcel Delivery Authorisation for the recipient (base64-encoded)>",
+  "pda_chain": [
+    "<PDA Chain, Certificate #1 (base64-encoded)>",
+    "..."
+  ]
+}
+```
+
+Using Awala's nomenclature, each ping is a _service message_ -- as is each pong. Each message is made of a _type_ (like `application/vnd.awala.ping-v1.ping`) and its _content_ (like the JSON document above). The content is binary so that you can transmit textual and binary data.
+
+A service message isn't transmitted as is: Instead, it's encrypted and put inside a _parcel_, which contains just enough information for gateways to route it and ensure that only pre-authorised messages are delivered.
+
+Fortunately, awaladroid takes care of the cryptography and (un)sealing parcels, so that you can focus on the important things.
+
+### Serialise ping messages
+
+Let's define the JSON serialisation routine first. Create a new file called `PingSerialization.kt` in the same package as the main activity, and add the following to it:
+
+```kotlin
+package com.example.pingcodelab
+
+import android.util.Base64
+import org.json.JSONArray
+import org.json.JSONObject
+
+internal fun serializePingMessage(
+    pingId: String,
+    pda: ByteArray,
+    pdaChain: List<ByteArray>
+): ByteArray {
+    val pingJSON = JSONObject()
+    pingJSON.put("id", pingId)
+    pingJSON.put("pda", base64Encode(pda))
+    pingJSON.put("pda_chain", JSONArray(pdaChain.map { base64Encode(it) }))
+    val pingJSONString = pingJSON.toString()
+    return pingJSONString.toByteArray()
+}
+
+private fun base64Encode(input: ByteArray): String =
+    Base64.encodeToString(input, Base64.DEFAULT)
+```
+
+### Send service message
+
+The private gateway runs as a [bound service](https://developer.android.com/guide/components/bound-services) and you're responsible for binding to it whenever you need to send messages. Generally speaking, binding must take place at some point after calling `Awala.setup()` (currently done in your `App` class) and before communication starts.
+
+It's up to you whether to stay bound indefinitely or only bind when necessary, but in this codelab you're going to defer the binding until the first message is sent.
+
+Go back to the `MainActivity` class and rewrite the `sendPing()` method as follows:
+
+```kotlin
+private suspend fun sendPing() {
+    // Bind to the gateway if not already bound
+    GatewayClient.bind()
+
+    val pingId = UUID.randomUUID().toString()
+    val authorization = context.sender.issueAuthorization(
+        context.recipient,
+        ZonedDateTime.now().plusDays(3)
+    )
+    val pingMessageSerialized = serializePingMessage(
+        pingId,
+        authorization.pdaSerialized,
+        authorization.pdaChainSerialized
+    )
+    val outgoingMessage = OutgoingMessage.build(
+        "application/vnd.relaynet.ping-v1.ping",
+        pingMessageSerialized,
+        context.sender,
+        context.recipient
+    )
+    GatewayClient.sendMessage(outgoingMessage)
+    val pingMessage = Ping(pingId)
+    context.pingRepository.set(pingMessage)
+}
+```
+
+`GatewayClient.bind()` is idempotent, so nothing bad would happen if the app is already bound to the gateway.
+
+### Unbind from the gateway
+
+To unbind from the gateway when the app is no longer on the foreground, go back to the `MainActivity` class and override the `onDestroy()` method as follows:
+
+
+```kotlin
+override fun onDestroy() {
+    super.onDestroy()
+
+    // Unbind from the gateway if still bound
+    GatewayClient.unbind()
+}
+```
+
+Note that `GatewayClient.unbind()` is idempotent too.
+
+### Test it!
+
+Install the app and start sending pings. It should look like this:
+
+![](images/android-centralised/main-activity-ping-only.png)
+
+You should be getting pongs at this point -- They're just not displayed on the screen just yet.
 
 ## Receive pongs
 
-Duration: 0:10:00
+Duration: 0:5:00
 
-Awala requires messages bound for private endpoints to be pre-authorised by the recipient in order to prevent abuse, but no authorisation is required when the message is bound for public endpoints.
+You're now going to update the data in the ping repository to set the time when the app received each pong message. The `MainActivity` is programmed to update the screen whenever the repository changes, so those changes should be reflected on the screen almost instantly.
 
-Collect messages outside any activity so that they can be processed when the app isn't on the foreground. The private gateway will wake it up.
+### Deserialise pong messages
+
+The content of the pong message is just the respective ping id -- no JSON this time. So go back to the `PingSerialization.kt` file and add the following:
+
+```kotlin
+internal fun extractPingIdFromPongMessage(pongMessageSerialized: ByteArray): String {
+    return pongMessageSerialized.toString(Charset.defaultCharset())
+}
+```
+
+### Collect service messages
+
+When the private gateway receives a message bound for one of the endpoints inside your app, it will notify your app by binding to it -- Android will then wake up your app in the background unless it's already running in the foreground.
+
+Before awaladroid can actually collect messages, you have to define how those messages should be processed. In this codelab you're going to do that as soon as the app starts, so that you can process pong messages even when your app isn't in use.
+
+Go to the `App` class and override the `collectMessages()` method as follows:
+
+```kotlin
+private suspend fun collectMessages() {
+    GatewayClient.receiveMessages().collect {
+        val pingId = extractPingIdFromPongMessage(it.content)
+        val pingMessage = pingRepository.get(pingId)
+        pingRepository.set(pingMessage.copy(pongDate = System.currentTimeMillis()))
+
+        it.ack()
+    }
+}
+```
+
+Note that you're having to call the `ack()` method on the incoming message as soon as you finish processing it to instruct the gateway to delete its copy of the parcel. The gateway will continue to send you that message until you acknowledge it. If the processing is expensive and/or you may get many messages, you may want to add incoming messages to a background queue and acknowledge immediately.
+
+The incoming message exposes the `type` of the message (e.g., `application/vnd.awala.ping-v1.pong`), as well as the third-party `sender` and the first-party `recipient` endpoints.
+
+You'll notice that you're not binding to the gateway: That's because awaladroid will do it on demand when new incoming messages are available.
+
+### Test it again!
+
+Reinstall the app and try to send pings again. If everything works as expected, you should now see the time when the respective pong messages were received:
+
+![](images/android-centralised/main-activity-ping-pong.png)
 
 ## That's it!
 
