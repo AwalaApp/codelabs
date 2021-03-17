@@ -106,14 +106,6 @@ Now add the following line inside `plugins { ... }` so that you can use syntheti
 
 Finally, accept Android Studio's prompt to sync the project.
 
-### Request permission to communicate with the private gateway
-
-Add the following line inside the `&lt;manifest>` of your `AndroidManifest.xml` file for your app to be able to communicate with the [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway):
-
-```xml
-<uses-permission android:name="tech.relaycorp.gateway.SYNC" />
-```
-
 ## Implement the ping repository
 
 Duration: 0:2:00
