@@ -6,10 +6,10 @@ import com.tfcporciuncula.flow.FlowSharedPreferences
 import com.tfcporciuncula.flow.Serializer
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-data class PingMessage(
+data class Ping(
     val id: String,
-    val sent: Long = System.currentTimeMillis(),
-    val received: Long? = null
+    val date: Long = System.currentTimeMillis(),
+    val pongDate: Long? = null
 )
 
 @ExperimentalCoroutinesApi
@@ -18,18 +18,18 @@ class PingRepository(
     private val moshi: Moshi
 ) {
     private val repo by lazy {
-        val serializer = object : Serializer<List<PingMessage>> {
-            private val adapter = moshi.adapter<List<PingMessage>>(
+        val serializer = object : Serializer<List<Ping>> {
+            private val adapter = moshi.adapter<List<Ping>>(
                 Types.newParameterizedType(
                     List::class.java,
-                    PingMessage::class.java
+                    Ping::class.java
                 )
             )
 
             override fun deserialize(serialized: String) =
                 adapter.fromJson(serialized) ?: emptyList()
 
-            override fun serialize(value: List<PingMessage>) =
+            override fun serialize(value: List<Ping>) =
                 adapter.toJson(value)
         }
 
@@ -43,9 +43,9 @@ class PingRepository(
     fun observe() = repo.asFlow()
 
     fun get(id: String) =
-        repo.get().firstOrNull { it.id == id }
+        repo.get().first { it.id == id }
 
-    suspend fun set(message: PingMessage) {
+    suspend fun set(message: Ping) {
         repo.setAndCommit(
             repo.get()
                 .filterNot { it.id == message.id }

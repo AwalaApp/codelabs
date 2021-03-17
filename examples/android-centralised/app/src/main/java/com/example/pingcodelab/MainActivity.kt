@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import tech.relaycorp.awaladroid.GatewayClient
 import tech.relaycorp.awaladroid.messaging.OutgoingMessage
-import tech.relaycorp.awaladroid.messaging.ParcelId
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -52,11 +51,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun formatPings(it: List<PingMessage>) =
+    private fun formatPings(it: List<Ping>) =
         it.joinToString("\n---\n") { ping ->
-            val pingDate = Date(ping.sent)
-            val pongDate = ping.received?.let {
-                Date(ping.received)
+            val pingDate = Date(ping.date)
+            val pongDate = ping.pongDate?.let {
+                Date(ping.pongDate)
             } ?: "Pending"
             val shortId = ping.id.takeLast(6)
             listOf(
@@ -67,7 +66,28 @@ class MainActivity : AppCompatActivity() {
         }
 
     private suspend fun sendPing() {
-        // TODO
+        // Bind to the gateway if not already bound
+        GatewayClient.bind()
+
+        val pingId = UUID.randomUUID().toString()
+        val authorization = context.sender.issueAuthorization(
+            context.recipient,
+            ZonedDateTime.now().plusDays(3)
+        )
+        val pingMessageSerialized = serializePingMessage(
+            pingId,
+            authorization.pdaSerialized,
+            authorization.pdaChainSerialized
+        )
+        val outgoingMessage = OutgoingMessage.build(
+            "application/vnd.awala.ping-v1.ping",
+            pingMessageSerialized,
+            context.sender,
+            context.recipient
+        )
+        GatewayClient.sendMessage(outgoingMessage)
+        val pingMessage = Ping(pingId)
+        context.pingRepository.set(pingMessage)
     }
 
     override fun onDestroy() {

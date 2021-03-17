@@ -7,7 +7,9 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tfcporciuncula.flow.FlowSharedPreferences
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.collect
 import tech.relaycorp.awaladroid.Awala
+import tech.relaycorp.awaladroid.GatewayClient
 import tech.relaycorp.awaladroid.endpoint.FirstPartyEndpoint
 import tech.relaycorp.awaladroid.endpoint.PublicThirdPartyEndpoint
 
@@ -66,7 +68,13 @@ class App : Application() {
         }
     }
 
-    private fun collectMessages() {
-        // TODO
+    private suspend fun collectMessages() {
+        GatewayClient.receiveMessages().collect {
+            val pingId = extractPingIdFromPongMessage(it.content)
+            val pingMessage = pingRepository.get(pingId)
+            pingRepository.set(pingMessage.copy(pongDate = System.currentTimeMillis()))
+
+            it.ack()
+        }
     }
 }
