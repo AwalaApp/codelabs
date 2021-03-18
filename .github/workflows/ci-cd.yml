@@ -21,7 +21,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
       - run: ./bin/setup.sh
-      - run: ./bin/generate.sh
+      - run: ./bin/generate-site.sh
       - name: Upload static site
         uses: peaceiris/actions-gh-pages@v2.10.1
         if: github.ref == 'refs/heads/main'
