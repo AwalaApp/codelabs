@@ -16,7 +16,7 @@ An _Awala service_ is a collection of mobile, desktop, server-side and/or CLI ap
 
 The service is _centralised_ if there's a public endpoint as the sender or recipient of all messages, or _decentralised_ if all endpoints are private. Alternatively, if there's a public endpoint involved in some but not necessarily all messages, then the service is _hybrid_.
 
-Anyone can define Awala services, but to keep this codelab simple, we'll just build an Android app for [Awala Ping](https://specs.awala.network/RS-014), which is a trivial service used to test Awala implementations.
+Anyone can define Awala services, but to keep this codelab simple, we'll just build an Android app for [Awala Ping](https://specs.awala.network/RS-014), which is a trivial service used to test Awala itself.
 
 ### What you'll build
 
@@ -24,15 +24,15 @@ You'll build an Android app that will send _ping_ messages to the public endpoin
 
 ![](./images/android-centralised/app-screenshot.png)
 
-As illustrated in the picture below, when you send a ping from your Android app to `ping.awala.services`, the message will pass through the [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway) and then on to the public gateway (at `frankfurt.relaycorp.cloud`, for example).
+As illustrated in the picture below, when you send a ping from your Android app to `ping.awala.services`, the message will pass through the [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway), then on to the public gateway (at `frankfurt.relaycorp.cloud`, for example), and it'll then arrive at the public endpoint.
 
-![](./images/android-centralised/service-architecture-ping.png)
+![](images/ping-service/service-architecture-ping.png)
 
 On the other hand, `ping.awala.services` has to respond to your ping by sending a pong message back via the same gateways as illustrated below:
 
-![](./images/android-centralised/service-architecture-pong.png)
+![](images/ping-service/service-architecture-pong.png)
 
-Awala requires messages bound for private endpoints (such as the one inside this Android app) to be pre-authorised by the recipient, so that means your ping message will have to include an authorisation for `ping.awala.services` to reply with a pong message. In a regular service, authorisations would be issued once and renewed periodically, but `ping.awala.services` is stateless, so your app will have to issue an authorisation each time.
+Awala requires messages bound for private endpoints (such as the one inside this Android app) to be pre-authorised by the recipient, so that means your ping message will have to include an authorisation for `ping.awala.services` to reply with a pong message. In most services, authorisations would be issued once and renewed periodically, but `ping.awala.services` is stateless, so your app will have to issue an authorisation each time.
 
 You'll be using the Android endpoint library _[awaladroid](https://github.com/relaycorp/awala-endpoint-android)_ to send and receive messages via the private gateway.
 
