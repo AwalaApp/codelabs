@@ -4,7 +4,7 @@ set -o nounset
 set -o errexit
 set -o pipefail
 
-go get github.com/googlecodelabs/tools/claat@v2.2.4
+go get github.com/googlecodelabs/tools/claat
 
 cd site
 npm install
