@@ -58,7 +58,7 @@ Duration: 10:00
 
 ### Set up the GCP SDK
 
-[Install and initialize the GCP SDK](https://cloud.google.com/sdk/docs/install), and then make the new project the default locally:
+[Install and initialize the GCP SDK](https://cloud.google.com/sdk/docs/install), and then make the new project the default:
 
 ```shell
 gcloud config set project [YOUR_PROJECT_ID]
@@ -71,7 +71,7 @@ You're now going to deploy a trivial app to GAE to make sure everything is worki
 Start by creating the GAE app for your project in the region of your choosing:
 
 ```shell
-gcloud app create --project=[YOUR_PROJECT_ID]
+gcloud app create
 ```
 
 Next, [download the app template](/examples/nodejs-pong-template.zip), unzip it and change into its directory. On macOS and Linux, you can do this with the following commands:
@@ -95,9 +95,9 @@ Let's make sure everything has worked so far by starting the server:
 npm run start:dev
 ```
 
-You should see the message `It works!` when you open [`http://localhost:8080`](http://localhost:8080/). Now quit the server by pressing `Ctrl`+`C` (or `Cmd`+`C` on macOS).
+You should see the message `It works!` when you open [`http://localhost:8080`](http://localhost:8080/).
 
-Now it's time to deploy it to GAE:
+That's great! So now it's time to deploy the app to GAE, but first quit the server by pressing `Ctrl`+`C` (or `Cmd`+`C` on macOS), and then run the following:
 
 ```shell
 gcloud app deploy
@@ -114,6 +114,40 @@ gcloud app browse
 You should see something like this:
 
 ![](images/nodejs-pong/app-template-remote.png)
+
+## Create the SRV record for the endpoint
+
+Duration: 5:00
+
+We don't need this DNS record just yet, but DNS propagation can sometimes take a while, it's best to get it going now.
+
+### Make sure your domain has DNSSEC properly configured
+
+Go to [dnssec-analyzer.verisignlabs.com](https://dnssec-analyzer.verisignlabs.com) and check that your domain has DNSSEC properly configured. If that's the case, you'll see a screen like this:
+
+![](images/nodejs-pong/dnssec-successful-analysis.png)
+
+If you any issues, please check the documentation of your DNS hosting provider and/or registrar to resolve them. **Awala gateways won't communicate with your public endpoint if its DNSSEC setup is invalid**.
+
+### Create the record
+
+Create an SRV record under the domain you wish to use using the following parameters:
+
+- Domain name: `_rpdc._tcp.your-domain.com` if you want `your-domain.com` to be the public address, or `_rpdc._tcp.subdomain.your-domain.com` if you want `subdomain.your-domain.com` to be the public address. Alternatively, if you have to specify these fields separately, use:
+  - Service: `_rpdc`.
+  - Protocol: `_tcp` or TCP.
+  - Domain name: `your-domain.com` or `subdomain.your-domain.com`.
+- Value: `0 5 443 [YOUR-GAE-APP-DOMAIN]`. Alternatively, if you have to specify these fields separately, use:
+ - Priority: `0`.
+ - Weight: `5`.
+ - Port: `443`.
+ - Target: Your GAE app domain (e.g., `pong-codelab.nw.r.appspot.com`).
+
+For example, if you were to point the public address `pong-codelab.awala.services` to `https://pong-codelab.nw.r.appspot.com` using Cloudflare as the DNS provider, you'd do the following:
+
+![](images/nodejs-pong/srv-record-cloudflare.png)
+
+You can use [dnschecker.org](https://dnschecker.org/#SRV/_rpdc._tcp.ping.awala.services) to monitor the propagation of the new DNS record in a new web browser tab, so that you can continue with the rest of the codelab.
 
 ## Generate an identity certificate
 
