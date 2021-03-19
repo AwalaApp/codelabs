@@ -32,6 +32,9 @@ On the other hand, `ping.awala.services` has to respond to your ping by sending 
 
 ![](images/ping-service/service-architecture-pong.png)
 
+Positive
+: The Ping service uses a request-response pattern because its sole purpose is to test that endpoints can send and receive data. However, **endpoints in your own services can send messages at any time** and there's no requirement to respond to messages. Your endpoints should just push data to their peers whenever new data is available, without waiting for anyone else to "initiate" the communication.
+
 Awala requires messages bound for private endpoints (such as the one inside this Android app) to be pre-authorised by the recipient, so that means your ping message will have to include an authorisation for `ping.awala.services` to reply with a pong message. In most services, authorisations would be issued once and renewed periodically, but `ping.awala.services` is stateless, so your app will have to issue an authorisation each time.
 
 You'll be using the Android endpoint library _[awaladroid](https://github.com/relaycorp/awala-endpoint-android)_ to send and receive messages via the private gateway.
@@ -40,7 +43,7 @@ You'll be using the Android endpoint library _[awaladroid](https://github.com/re
 
 - Prior experience building Android apps. If you've never built an Android app, the [first app guide](https://developer.android.com/training/basics/firstapp) will teach you what you need to complete this codelab.
 - [Android Studio](https://developer.android.com/studio) 4.1+.
-- An Android phone or table running Android 5+.
+- An Android phone or tablet running Android 5+.
 - The [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway) installed on that Android device.
 
 ### In case you need help
