@@ -1,4 +1,4 @@
-summary: Build a public endpoint using Node.js (WORKING DRAFT)
+summary: Build a public endpoint using Node.js
 id: nodejs-pong
 categories: nodejs
 tags: medium
@@ -6,7 +6,7 @@ status: Published
 authors: Gus Narea
 Feedback Link: https://github.com/AwalaNetwork/codelabs
 
-# Build a public endpoint using Node.js (WORKING DRAFT)
+# Build a public endpoint using Node.js
 
 ## Overview
 
@@ -38,7 +38,7 @@ Positive
 - Basic understanding of Node.js and JavaScript/TypeScript.
 - [Node.js](https://nodejs.org/en/download/) 14+.
 - A [Google Cloud Platform](https://cloud.google.com/) (GCP) account. As of this writing, running this codelab alone won't exceed your [free quota](https://cloud.google.com/appengine/quotas).
-- A domain name with DNSSEC enabled and the ability to create SRV records. If you don't have one already, register a cheap one for $2 or so on [namecheap.com](https://www.namecheap.com/). If you know of a service offering this for free, use it and please [let us know about it](https://github.com/AwalaNetwork/codelabs/issues/5).
+- A domain name with DNSSEC enabled and the ability to create SRV records. If you don't have one already, register a cheap one with your favourite registrar. Alternatively, if you know of a service offering this for free, use it and please [let us know about it](https://github.com/AwalaNetwork/codelabs/issues/5).
 - An Android phone or tablet running Android 5+.
 - The [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway) installed on that Android device.
 
@@ -105,7 +105,13 @@ gcloud app deploy
 
 ### Test the app!
 
-Open the URL you got from the `gcloud app deploy` command in your web browser. You should see something like this:
+Run the following command to open the app in your browser:
+
+```shell
+gcloud app browse
+```
+
+You should see something like this:
 
 ![](images/nodejs-pong/app-template-remote.png)
 
