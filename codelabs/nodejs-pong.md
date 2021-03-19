@@ -64,6 +64,9 @@ Duration: 10:00
 gcloud config set project [YOUR_PROJECT_ID]
 ```
 
+Negative
+: If you're already using GCP, it's important not to skip the command above. If you don't run it, you'll end up modifying one of your existing projects.
+
 ### Deploy the app template
 
 You're now going to deploy a trivial app to GAE to make sure everything is working so far. You're going to build on this app to implement the public endpoint later.
@@ -119,7 +122,7 @@ You should see something like this:
 
 Duration: 5:00
 
-We don't need this DNS record just yet, but DNS propagation can sometimes take a while, it's best to get it going now.
+We don't need this DNS record just yet, but DNS propagation can sometimes take a while, so it's best to get it going now.
 
 ### Make sure your domain has DNSSEC properly configured
 
@@ -127,7 +130,7 @@ Go to [dnssec-analyzer.verisignlabs.com](https://dnssec-analyzer.verisignlabs.co
 
 ![](images/nodejs-pong/dnssec-successful-analysis.png)
 
-If you any issues, please check the documentation of your DNS hosting provider and/or registrar to resolve them. **Awala gateways won't communicate with your public endpoint if its DNSSEC setup is invalid**.
+If any issues are reported, check the documentation of your DNS hosting provider and/or registrar to resolve them. **Awala gateways won't communicate with your public endpoint if its DNSSEC setup is invalid**.
 
 ### Create the record
 
