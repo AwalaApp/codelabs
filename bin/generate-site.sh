@@ -37,4 +37,4 @@ touch dist/.nojekyll
 DIST_EXAMPLES_ROOT="$(pwd)/dist/examples"
 mkdir "${DIST_EXAMPLES_ROOT}"
 cd "${ROOT}/examples"
-find . -maxdepth 1 -mindepth 1 -type d -exec zip -r "${HOME}/tmp/{}.zip" {} \;
+find . -maxdepth 1 -mindepth 1 -type d -exec zip -r "${DIST_EXAMPLES_ROOT}/{}.zip" {} \;
