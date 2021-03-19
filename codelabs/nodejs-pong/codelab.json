@@ -4,22 +4,22 @@
   "prefix": "https://storage.googleapis.com",
   "mainga": "UA-49880327-14",
   "updated": "2021-03-19T10:00:21Z",
-  "id": "android-centralised",
-  "duration": 33,
-  "title": "Build an Android app for a centralised Awala service",
+  "id": "nodejs-pong",
+  "duration": 53,
+  "title": "Build a public endpoint using Node.js (WORKING DRAFT)",
   "authors": "Gus Narea",
-  "summary": "Build an Android app for a centralised Awala service",
-  "source": "../codelabs/android-centralised.md",
+  "summary": "Build a public endpoint using Node.js (WORKING DRAFT)",
+  "source": "../codelabs/nodejs-pong.md",
   "theme": "",
   "status": [
     "published"
   ],
   "category": [
-    "android"
+    "nodejs"
   ],
   "tags": [
     "medium"
   ],
   "feedback": "https://github.com/AwalaNetwork/codelabs",
-  "url": "android-centralised"
+  "url": "nodejs-pong"
 }
