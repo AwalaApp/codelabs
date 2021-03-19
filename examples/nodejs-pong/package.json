@@ -1,0 +1,27 @@
+{
+  "name": "awala-pong-codelab",
+  "version": "1.0.0",
+  "devDependencies": {
+    "@types/node": "^14.14.35",
+    "npm-run-all": "^4.1.5",
+    "trash-cli": "^4.0.0",
+    "typescript": "^4.2.3"
+  },
+  "scripts": {
+    "start": "node build/server.js",
+    "start:dev": "IS_DEV=true run-s build start",
+    "prebuild": "run-s clean",
+    "build": "tsc -p tsconfig.json",
+    "clean": "trash build"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "author": "Relaycorp, Inc.",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "fastify": "^3.14.0",
+    "make-promises-safe": "^5.1.0"
+  }
+}

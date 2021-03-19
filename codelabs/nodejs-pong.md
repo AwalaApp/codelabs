@@ -10,7 +10,7 @@ Feedback Link: https://github.com/AwalaNetwork/codelabs
 
 ## Overview
 
-Duration: 5:00
+Duration: 10:00
 
 An _Awala service_ is a collection of mobile, desktop, server-side and/or CLI apps that exchange mutually-intelligible messages using _endpoints_. Server-side apps exposed as Internet hosts will have _public endpoints_ (e.g., `your-service.com`), whilst all other apps (e.g., mobile, desktop) will have _private endpoints_.
 
@@ -37,27 +37,77 @@ Positive
 
 - Basic understanding of Node.js and JavaScript/TypeScript.
 - [Node.js](https://nodejs.org/en/download/) 14+.
-- A [Google Cloud Platform](https://cloud.google.com/) account. As of this writing, doing this codelab is within the [free quota](https://cloud.google.com/appengine/quotas), but you're responsible for checking for [any charges](https://cloud.google.com/appengine/pricing) at the time you do this codelab.
+- A [Google Cloud Platform](https://cloud.google.com/) (GCP) account. As of this writing, running this codelab alone won't exceed your [free quota](https://cloud.google.com/appengine/quotas).
+- A domain name with DNSSEC enabled and the ability to create SRV records. If you don't have one already, register a cheap one for $2 or so on [namecheap.com](https://www.namecheap.com/). If you know of a service offering this for free, use it and please [let us know about it](https://github.com/AwalaNetwork/codelabs/issues/5).
 - An Android phone or tablet running Android 5+.
 - The [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway) installed on that Android device.
 
 ### In case you need help
 
-If you have any issues in the course of this codelab, please post a message on [our forum](https://community.awala.network/) and we'll help you out! You can also check out the [final version of the app you're going to build](https://github.com/AwalaNetwork/codelabs/tree/main/examples/nodejs-pong-final).
+If you have any issues in the course of this codelab, please post a message on [our forum](https://community.awala.network/) and we'll help you out! You can also check out the [final version of the app you're going to build](https://github.com/AwalaNetwork/codelabs/tree/main/examples/nodejs-pong).
 
 ## Set up Google App Engine
 
 Duration: 10:00
 
-https://console.cloud.google.com/apis/library/cloudbuild.googleapis.com
+### Set up a new GCP project
 
-<button>
-  [Download template](/examples/nodejs-pong-template.zip)
-</button>
+1. [Create a new GCP project](https://console.cloud.google.com/projectcreate) and give it any name you'd like.
+1. Make sure that billing is enabled for the project. [Learn how to confirm that billing is enabled](https://cloud.google.com/billing/docs/how-to/modify-project).
+1. Enable the [Cloud Build API](https://console.cloud.google.com/apis/library/cloudbuild.googleapis.com).
 
-gcloud config set project myProject
+### Set up the GCP SDK
 
+[Install and initialize the GCP SDK](https://cloud.google.com/sdk/docs/install), and then make the new project the default locally:
+
+```shell
+gcloud config set project [YOUR_PROJECT_ID]
+```
+
+### Deploy the app template
+
+You're now going to deploy a trivial app to GAE to make sure everything is working so far. You're going to build on this app to implement the public endpoint later.
+
+Start by creating the GAE app for your project in the region of your choosing:
+
+```shell
+gcloud app create --project=[YOUR_PROJECT_ID]
+```
+
+Next, [download the app template](/examples/nodejs-pong-template.zip), unzip it and change into its directory. On macOS and Linux, you can do this with the following commands:
+
+```shell
+wget https://codelabs.awala.network/examples/nodejs-pong-template.zip
+unzip nodejs-pong-template.zip
+cd nodejs-pong-template
+```
+
+Then install the app and build it:
+
+```shell
+npm install
+npm run build
+```
+
+Let's make sure everything has worked so far by starting the server:
+
+```shell
+npm run start:dev
+```
+
+You should see the message `It works!` when you open [`http://localhost:8080`](http://localhost:8080/). Now quit the server by pressing `Ctrl`+`C` (or `Cmd`+`C` on macOS).
+
+Now it's time to deploy it to GAE:
+
+```shell
 gcloud app deploy
+```
+
+### Test the app!
+
+Open the URL you got from the `gcloud app deploy` command in your web browser. You should see something like this:
+
+![](images/nodejs-pong/app-template-remote.png)
 
 ## Generate an identity certificate
 
@@ -77,13 +127,20 @@ Duration: 10:00
 
 ## That's it!
 
-Duration: 3:00
+Duration: 5:00
 
 Well done! You've just built an Android app for a centralised Awala service.
 
 ### Delete the GCP project
 
+When you're done testing the public endpoint you created, do the following to delete the resources you created:
 
+Negative
+: If you created other GCP resources outside this codelab, those will be deleted too.
+
+1. Go to the [GCP resource manager](https://console.cloud.google.com/cloud-resource-manager).
+1.  In the project list, select the project that you want to delete, and then click _Delete_.
+1.  In the dialog, type the project ID, and then click _Shut down_ to delete the project.
 
 ### What's next?
 
