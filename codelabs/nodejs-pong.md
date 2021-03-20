@@ -36,7 +36,7 @@ Positive
 ### What you'll need
 
 - Basic understanding of Node.js and JavaScript/TypeScript.
-- [Node.js](https://nodejs.org/en/download/) 14+.
+- [Node.js](https://nodejs.org/en/download/) 14+. We'll assume that `npm`, `npx` and `node` are on your `$PATH`.
 - A [Google Cloud Platform](https://cloud.google.com/) (GCP) account. As of this writing, running this codelab alone won't exceed your [free quota](https://cloud.google.com/appengine/quotas).
 - A domain name with DNSSEC enabled and the ability to create SRV records. If you don't have one already, register a cheap one with your favourite registrar. Alternatively, if you know of a service offering this for free, use it and please [let us know about it](https://github.com/AwalaNetwork/codelabs/issues/5).
 - An Android phone or tablet running Android 5+.
@@ -65,7 +65,7 @@ gcloud config set project [YOUR_PROJECT_ID]
 ```
 
 Negative
-: If you're already using GCP, it's important not to skip the command above. If you don't run it, you'll end up modifying one of your existing projects.
+: It's important not to skip the command above if you're already using GCP. Otherwise, you'll end up modifying one of your existing projects.
 
 ### Deploy the app template
 
@@ -77,7 +77,7 @@ Start by creating the GAE app for your project in the region of your choosing:
 gcloud app create
 ```
 
-Next, [download the app template](/examples/nodejs-pong-template.zip), unzip it and change into its directory. On macOS and Linux, you can do this with the following commands:
+Next, [download the app template](/examples/nodejs-pong-template.zip), unzip it and change into its directory. On Linux and macOS, you can do this with the following commands:
 
 ```shell
 wget https://codelabs.awala.network/examples/nodejs-pong-template.zip
@@ -130,7 +130,10 @@ Go to [dnssec-analyzer.verisignlabs.com](https://dnssec-analyzer.verisignlabs.co
 
 ![](images/nodejs-pong/dnssec-successful-analysis.png)
 
-If any issues are reported, check the documentation of your DNS hosting provider and/or registrar to resolve them. **Awala gateways won't communicate with your public endpoint if its DNSSEC setup is invalid**.
+If any issues are reported, check the documentation of your DNS hosting provider and/or registrar to resolve them.
+
+Negative
+: For security reasons, Awala gateways will communicate with your public endpoint if and only if DNS answers have valid DNSSEC signatures.
 
 ### Create the record
 
@@ -139,14 +142,14 @@ Create an SRV record under the domain you wish to use using the following parame
 - Domain name: `_rpdc._tcp.your-domain.com` if you want `your-domain.com` to be the public address, or `_rpdc._tcp.subdomain.your-domain.com` if you want `subdomain.your-domain.com` to be the public address. Alternatively, if you have to specify these fields separately, use:
   - Service: `_rpdc`.
   - Protocol: `_tcp` or TCP.
-  - Domain name: `your-domain.com` or `subdomain.your-domain.com`.
+  - Name: `your-domain.com` or `subdomain.your-domain.com`.
 - Value: `0 5 443 [YOUR-GAE-APP-DOMAIN]`. Alternatively, if you have to specify these fields separately, use:
  - Priority: `0`.
  - Weight: `5`.
  - Port: `443`.
  - Target: Your GAE app domain (e.g., `pong-codelab.nw.r.appspot.com`).
 
-For example, if you were to point the public address `pong-codelab.awala.services` to `https://pong-codelab.nw.r.appspot.com` using Cloudflare as the DNS provider, you'd do the following:
+For example, if you were to map the public address `pong-codelab.awala.services` to `https://pong-codelab.nw.r.appspot.com` using Cloudflare as the DNS provider, you'd do the following:
 
 ![](images/nodejs-pong/srv-record-cloudflare.png)
 
@@ -155,6 +158,50 @@ You can use [dnschecker.org](https://dnschecker.org/#SRV/_rpdc._tcp.ping.awala.s
 ## Generate an identity certificate
 
 Duration: 5:00
+
+Awala requires _nodes_ (i.e., gateways and endpoints) to have long-term _identity certificates_ in order for nodes to authenticate and authorise each other. In other words, Awala defines its own _Public Key Infrastructure_ (PKI), which is independent of and incompatible with the Internet PKI.
+
+This PKI is essential to prevent abuse whilst protecting the privacy of end users in a highly-scalable manner, as it allows nodes to know which messages are authorised to reach the destination without leaking the identity of the sender or the recipient operating a private endpoint -- and without having to remember which peers are authorised.
+
+As a consequence, each message must be signed by the sender and the sender's certificate must be attached to that message. Additionally, if the message is bound for a private endpoint, it must contain a _certificate chain_ that includes the recipient's private gateway certificate. This certainly impacts performance, but the privacy, scalability and availability benefits are far more important.
+
+You're going to use [`relaydev`](https://www.npmjs.com/package/@relaycorp/relaydev) to generate the identity certificate for your endpoint.
+
+Positive
+: In addition to high-level libraries and tools like `relaydev`, we're planning to take things further by [completely taking the PKI and key management off your plate](https://github.com/relaycorp/relayverse/issues/28).
+
+### Generate a key pair
+
+First, you need to generate the identity key:
+
+```
+npx @relaycorp/relaydev key gen-rsa > private-key.der
+```
+
+### Self-issue a certificate
+
+Then you can self-issue an identity certificate, overriding `$END_DATE` with your preferred end date:
+
+```
+END_DATE="2022-01-01"
+
+# Extract the public key
+npx @relaycorp/relaydev key get-rsa-pub < private-key.der > public-key.der
+
+npx @relaycorp/relaydev cert issue \
+  --type=gateway \
+  --end-date="${END_DATE}" \
+  private-key.der \
+  < public-key.der > identity-certificate.der
+
+# Delete the public key
+rm public-key.der
+```
+
+### Expose the certificate
+
+Positive
+: This HTTP path is not part of any Awala protocol. We're only exposing it for convenience.
 
 ## Process incoming pings
 

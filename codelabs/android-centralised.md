@@ -440,6 +440,9 @@ private suspend fun setUpEndpoints() {
 }
 ```
 
+Positive
+: Just so you know, the parameters passed to `import()` will change soon in a backwardly-incompatible way [to improve the security of the communication](https://github.com/relaycorp/relayverse/issues/27) by using different key pairs for encryption and digital signatures. We use semantic versioning so the change will be introduced in a major version.
+
 ### Configure your own endpoint
 
 You now need to create a _first-party endpoint_ to be able to communicate with third-party endpoints like the one you just created for `ping.awala.services`, so let's make that first-party endpoint available when the app starts.
