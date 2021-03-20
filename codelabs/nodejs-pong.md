@@ -159,49 +159,99 @@ You can use [dnschecker.org](https://dnschecker.org/#SRV/_rpdc._tcp.ping.awala.s
 
 Duration: 5:00
 
-Awala requires _nodes_ (i.e., gateways and endpoints) to have long-term _identity certificates_ in order for nodes to authenticate and authorise each other. In other words, Awala defines its own _Public Key Infrastructure_ (PKI), which is independent of and incompatible with the Internet PKI.
+Awala requires _nodes_ (i.e., gateways and endpoints) to have long-term _identity certificates_ in order for nodes to authenticate and authorise each other. Consequently, each message must be signed by the sender, and the sender's certificate must be attached to the message. Additionally, messages bound for private endpoints must contain a _certificate chain_ that includes the recipient's private gateway certificate.
 
-This PKI is essential to prevent abuse whilst protecting the privacy of end users in a highly-scalable manner, as it allows nodes to know which messages are authorised to reach the destination without leaking the identity of the sender or the recipient operating a private endpoint -- and without having to remember which peers are authorised.
-
-As a consequence, each message must be signed by the sender and the sender's certificate must be attached to that message. Additionally, if the message is bound for a private endpoint, it must contain a _certificate chain_ that includes the recipient's private gateway certificate. This certainly impacts performance, but the privacy, scalability and availability benefits are far more important.
+Whilst this certainly impacts performance, it allows Awala to prevent abuse whilst protecting the privacy of end users in a highly-scalable manner: Nodes can verify that messages are authorised to reach the destination without leaking the identity of the human user behind private endpoints -- and without having to store any authorisation data.
 
 You're going to use [`relaydev`](https://www.npmjs.com/package/@relaycorp/relaydev) to generate the identity certificate for your endpoint.
 
 Positive
-: In addition to high-level libraries and tools like `relaydev`, we're planning to take things further by [completely taking the PKI and key management off your plate](https://github.com/relaycorp/relayverse/issues/28).
+: In addition to high-level libraries and tools like `relaydev`, we're planning to take things further by [completely taking the key management off your plate](https://github.com/relaycorp/relayverse/issues/28).
 
 ### Generate a key pair
 
 First, you need to generate the identity key:
 
-```
+```shell
 npx @relaycorp/relaydev key gen-rsa > private-key.der
 ```
 
+Negative
+: You're about to deploy this app along with the private key above for expediency, but in production you should absolutely use a secret management tool instead. We recommend [Vault](https://www.vaultproject.io/) and offer an [official library](https://github.com/relaycorp/keystore-vault-js) that integrates seamlessly in Awala.
+
 ### Self-issue a certificate
 
-Then you can self-issue an identity certificate, overriding `$END_DATE` with your preferred end date:
+Extract the public key from the key pair above:
 
-```
-END_DATE="2022-01-01"
-
-# Extract the public key
+```shell
 npx @relaycorp/relaydev key get-rsa-pub < private-key.der > public-key.der
+```
 
+Then you can self-issue an identity certificate as shown below. Make sure to use an end date in the future.
+
+```shell
 npx @relaycorp/relaydev cert issue \
-  --type=gateway \
-  --end-date="${END_DATE}" \
+  --type=endpoint \
+  --end-date=2022-01-01 \
   private-key.der \
   < public-key.der > identity-certificate.der
+```
 
-# Delete the public key
+You won't need the public key anymore, so you can delete it now:
+
+```shell
 rm public-key.der
 ```
 
-### Expose the certificate
+### Serve the certificate
 
-Positive
-: This HTTP path is not part of any Awala protocol. We're only exposing it for convenience.
+You're going to serve the endpoint certificate so that other endpoints can use it to communicate with it. Awala doesn't currently offer a [standard way to distribute such certificates](https://github.com/AwalaNetwork/specs/issues/30), so you're just going to make it available at `/identity.der` in this codelab.
+
+To do this, create the file `src/routes/identityCert.ts` with the following contents:
+
+```typescript
+import { FastifyInstance } from 'fastify';
+import fs from 'fs';
+import { dirname, join } from 'path'
+
+const ROOT_DIR = dirname(dirname(__dirname));
+const CERT_PATH = join(ROOT_DIR, 'identity-certificate.der');
+
+export default async function registerRoutes(
+    fastify: FastifyInstance,
+    _options: any,
+): Promise<void> {
+    fastify.route({
+        method: ['GET'],
+        url: '/identity.der',
+        async handler(_req, reply): Promise<void> {
+            const certificate = await fs.promises.readFile(CERT_PATH);
+            reply
+                .type('application/vnd.etsi.tsl.der')
+                .send(certificate);
+        },
+    });
+}
+```
+
+### Test the new route
+
+Start the server locally (`npm start:dev`) and check that the new route is working as expected by checking the certificate it outputs. On Linux/macOS you can run the following:
+
+```shell
+curl -s http://127.0.0.1:8080/identity.der | npx @relaycorp/relaydev cert inspect
+```
+
+You should see an output like this:
+
+```
+Common Name: 0224281a7b5bcf0aa0db4b48baf43b6f03905bc884fd9483ee6445a900f255fea
+Private address: 0224281a7b5bcf0aa0db4b48baf43b6f03905bc884fd9483ee6445a900f255fea
+Certificate is valid
+
+Use `openssl` to get the full details:
+openssl x509 -noout -text -inform DER -in /path/to/cert.der
+```
 
 ## Process incoming pings
 
