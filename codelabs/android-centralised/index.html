@@ -391,6 +391,8 @@ curl -o app/src/main/res/raw/pub_endpoint_identity.der \
         )
 }
 </code></pre>
+<aside class="special"><p>Just so you know, the parameters passed to <code>import()</code> will change soon in a backwardly-incompatible way <a href="https://github.com/relaycorp/relayverse/issues/27" target="_blank">to improve the security of the communication</a> by using different key pairs for encryption and digital signatures. We use semantic versioning so the change will be introduced in a major version.</p>
+</aside>
 <h2 is-upgraded>Configure your own endpoint</h2>
 <p>You now need to create a <em>first-party endpoint</em> to be able to communicate with third-party endpoints like the one you just created for <code>ping.awala.services</code>, so let&#39;s make that first-party endpoint available when the app starts.</p>
 <p>Go back to the <code>App</code> class and declare the following field:</p>
@@ -541,7 +543,7 @@ private fun base64Encode(input: ByteArray): String =
 <li>Learn more about the <a href="https://awala.network/service-providers/implementation/architecture" target="_blank">architecture of Awala services</a>.</li>
 <li>Read the <a href="https://docs.relaycorp.tech/awala-endpoint-android/" target="_blank">API documentation for awaladroid</a>.</li>
 <li><a href="https://community.awala.network/" target="_blank">Join the Awala community</a> and give us some feedback on the codelab.</li>
-<li><a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fawala.network%2Fservice-providers%2F&via=AwalaNetwork&text=I%27ve%20just%20built%20an%20app%20that%20can%20sync%20with%20the%20Internet%20even%20if%20the%20user%20is%20disconnected%20from%20it%21" target="_blank">Share what you&#39;ve just done on Twitter</a>.</li>
+<li><a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fawala.network%2Fservice-providers%2F&via=AwalaNetwork&text=I%27ve%20just%20built%20an%20app%20that%20can%20sync%20with%20the%20Internet%20even%20if%20the%20user%20is%20disconnected%20from%20it%21" target="_blank">Spread the word on Twitter!</a></li>
 </ul>
 
 
