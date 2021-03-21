@@ -462,6 +462,23 @@ export default async function registerRoutes(
 Negative
 : Unlike private endpoints, **public endpoints are not protected against replay attacks**, so a malicious gateway could send the same parcel multiple times. This would be a problem in most cases, but you can avoid it by storing the `parcel.id` and the private address of the sender (`parcel.senderCertificate.subjectPrivateAddress`), and refusing any future parcels matching those. You only need to keep that data around until `parcel.expiryDate`, since `parcel.validate()` will catch expired parcels.
 
+### Test the new route
+
+Make sure that the new route is working fine by starting the server locally (`npm start:dev`) and making a `POST` request to it. For example, on Linux/macOS, you can run:
+
+```shell
+curl -X POST \
+  -H 'X-Relaynet-Gateway: foo.bar' \
+  -H 'Content-Type: application/vnd.awala.parcel' \
+  http://127.0.0.1:8080
+```
+
+Which should return the following:
+
+```json
+{"message":"Parcel is malformed or invalid"}
+```
+
 ## Send pongs
 
 Duration: 10:00
