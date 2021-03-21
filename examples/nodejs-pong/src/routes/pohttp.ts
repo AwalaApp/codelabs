@@ -51,7 +51,7 @@ export default async function registerRoutes(
                 request.log.info({ err }, 'Refusing malformed or invalid parcel');
                 return reply.code(403).send({ message: 'Parcel is malformed or invalid' });
             }
-            if (parcel.recipientAddress !== `https://${process.env.HTTP_HOST}`) {
+            if (parcel.recipientAddress !== `https://${process.env.PUBLIC_ADDRESS}`) {
                 request.log.info(
                     { recipient: parcel.recipientAddress },
                     'Refusing parcel bound for another endpoint'

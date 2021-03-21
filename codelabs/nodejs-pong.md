@@ -123,6 +123,8 @@ You should see something like this:
 
 Duration: 5:00
 
+You're about to set up the public address of your endpoint, which is specified with an SRV record.
+
 We don't need this DNS record just yet, but DNS propagation can sometimes take a while, so it's best to get it going now.
 
 ### Make sure your domain has DNSSEC properly configured
@@ -155,6 +157,17 @@ For example, if you were to map the public address `pong-codelab.awala.services`
 ![](images/nodejs-pong/srv-record-cloudflare.png)
 
 You can use [dnschecker.org](https://dnschecker.org/#SRV/_rpdc._tcp.ping.awala.services) to monitor the propagation of the new DNS record in a new web browser tab, so that you can continue with the rest of the codelab.
+
+### Set the public address in the app
+
+Open `app.yaml` and add the following:
+
+```yaml
+env_variables:
+  PUBLIC_ADDRESS: pong-codelab.awala.services
+```
+
+Make sure to set `PUBLIC_ADDRESS` to the right value in your case.
 
 ## Generate an identity certificate
 
@@ -436,7 +449,7 @@ export default async function registerRoutes(
         request.log.info({ err }, 'Refusing malformed or invalid parcel');
         return reply.code(403).send({ message: 'Parcel is malformed or invalid' });
       }
-      if (parcel.recipientAddress !== `https://${process.env.HTTP_HOST}`) {
+      if (parcel.recipientAddress !== `https://${process.env.PUBLIC_ADDRESS}`) {
         request.log.info(
           { recipient: parcel.recipientAddress },
           'Refusing parcel bound for another endpoint'
