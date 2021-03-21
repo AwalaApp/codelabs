@@ -18,7 +18,7 @@ You're going to work with the [Awala Ping](https://specs.awala.network/RS-014) s
 
 ### What you'll build
 
-You'll build a Node.js HTTP server that will act as a public endpoint in the Ping service, and you'll deploy it to [Google App Engine](https://cloud.google.com/appengine) (GAE).
+You'll build a [Fastify](https://www.fastify.io)-powered HTTP server that will act as a public endpoint in the Ping service, and you'll deploy it to [Google App Engine](https://cloud.google.com/appengine) (GAE).
 
 Say your public endpoint address is `ping.awala.services` and a private endpoint in an Android app sends you a ping, as illustrated in the picture below. When the private endpoint sends the ping, the message will pass through the [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway), then on to a public gateway (such as `frankfurt.relaycorp.cloud`), and it'll finally arrive at your public endpoint.
 
@@ -36,7 +36,7 @@ Positive
 ### What you'll need
 
 - Basic understanding of Node.js and JavaScript/TypeScript.
-- [Node.js](https://nodejs.org/en/download/) 14+. We'll assume that `npm`, `npx` and `node` are on your `$PATH`.
+- [Node.js](https://nodejs.org/en/download/) 14+. We'll assume that `npm`, `npx` and `node` are in your `$PATH`.
 - A [Google Cloud Platform](https://cloud.google.com/) (GCP) account. As of this writing, running this codelab alone won't exceed your [free quota](https://cloud.google.com/appengine/quotas).
 - A domain name with DNSSEC enabled and the ability to create SRV records. If you don't have one already, register a cheap one with your favourite registrar. Alternatively, if you know of a service offering this for free, use it and please [let us know about it](https://github.com/AwalaNetwork/codelabs/issues/5).
 - An Android phone or tablet running Android 5+.
@@ -256,6 +256,212 @@ openssl x509 -noout -text -inform DER -in /path/to/cert.der
 ## Process incoming pings
 
 Duration: 10:00
+
+You've now completed the groundwork, so it's time to start receiving pings!
+
+Pings are JSON-serialised messages that contain a unique identifier and the authorisation for your public endpoint to reply with a pong message, as illustrated below:
+
+```json
+{
+  "id": "<The ping id>",
+  "pda": "<The Parcel Delivery Authorisation for the recipient (base64-encoded)>",
+  "pda_chain": [
+    "<PDA Chain, Certificate #1 (base64-encoded)>",
+    "..."
+  ]
+}
+```
+
+Using Awala's nomenclature, each ping is a _service message_ -- as is each pong. Each message is made of a _type_ (like `application/vnd.awala.ping-v1.ping`) and its _content_ (like the JSON document above). The content is binary so that you can transmit textual and binary data.
+
+A service message isn't transmitted as is: Instead, it's encrypted and put inside a _parcel_, which contains just enough information for gateways to route it and ensure that only pre-authorised messages are delivered. Your app will be responsible for (un)sealing parcels using a high-level library.
+
+### Deserialise service messages
+
+Let's implement the code to extract the service message from incoming parcels and make sure that the contents are valid ping messages.
+
+First, install the Awala Node.js library:
+
+```shell
+npm install @relaycorp/relaynet-core
+```
+
+You're going to need to convert `Buffer` values to `ArrayBuffer` a few times, so now create a utility to do just that. Create the file `src/utils.ts` with the following contents:
+
+```typescript
+export function bufferToArrayBuffer(buffer: Buffer): ArrayBuffer {
+    return buffer.buffer
+        .slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+}
+```
+
+At this point you're ready to process incoming parcels, so you're going to implement a function that returns the encapsulated ping message after doing the following:
+
+1. Decrypt the service message contained in a parcel using the private key you generated earlier.
+1. Verify that the service message is syntactically valid and its `type` is that of a ping (i.e., `application/vnd.awala.ping-v1.ping`).
+1. Parse the `content` of the service message and check it's a valid ping.
+
+To achieve this, create the file `src/messaging.ts` with the following contents:
+
+```typescript
+import { Certificate, Parcel } from "@relaycorp/relaynet-core";
+
+import { bufferToArrayBuffer } from "./utils";
+
+export interface Ping {
+  id: string;
+  pda: Certificate;
+  pdaChain: Certificate[];
+}
+
+export async function extractPingFromParcel(parcel: Parcel, privateKey: CryptoKey): Promise<Ping> {
+  const { payload: serviceMessage } = await parcel.unwrapPayload(privateKey);
+  if (serviceMessage.type !== 'application/vnd.awala.ping-v1.ping') {
+    throw new Error(`Invalid service message type: ${serviceMessage.type}`);
+  }
+  return deserializePing(serviceMessage.content);
+}
+
+function deserializePing(pingSerialized: Buffer): Ping {
+  const pingJson = JSON.parse(pingSerialized.toString());
+
+  if (typeof pingJson.id !== 'string') {
+    throw new Error('Ping id is missing or it is not a string');
+  }
+
+  let pda: Certificate;
+  try {
+    pda = deserializeCertificate(pingJson.pda);
+  } catch (err) {
+    throw new Error(`Invalid PDA: ${err.message}`);
+  }
+
+  if (!Array.isArray(pingJson.pda_chain)) {
+    throw new Error('PDA chain is not an array');
+  }
+  let pdaChain: Certificate[];
+  try {
+    pdaChain = pingJson.pda_chain.map(deserializeCertificate);
+  } catch (err) {
+    throw new Error(`PDA chain contains invalid item: ${err.message}`);
+  }
+
+  return { id: pingJson.id, pda, pdaChain };
+}
+
+function deserializeCertificate(certificateDerBase64: any): Certificate {
+  if (typeof certificateDerBase64 !== 'string') {
+    throw new Error('Certificate is missing');
+  }
+
+  const certificateDer = Buffer.from(certificateDerBase64, 'base64');
+  if (certificateDer.byteLength === 0) {
+    throw new Error('Certificate is not base64-encoded');
+  }
+
+  try {
+    return Certificate.deserialize(bufferToArrayBuffer(certificateDer));
+  } catch (error) {
+    throw new Error('Certificate is base64-encoded but not DER-encoded');
+  }
+}
+```
+
+### Create Fastify route
+
+Gateways expect your server to receive parcels `POST`ed to `/`, so you're now going to create a Fastify route for `POST /`. In this route,
+
+Create the file `src/routes/pohttp.ts` with the following contents:
+
+```typescriptimport { derDeserializeRSAPrivateKey, Parcel } from "@relaycorp/relaynet-core";
+import { FastifyInstance } from "fastify";
+import * as process from "process";
+import fs from 'fs';
+import { dirname, join } from 'path';
+
+import { createPongParcel, extractPingFromParcel, Ping } from "../messaging";
+import { bufferToArrayBuffer } from "../utils";
+
+const ROOT_DIR = dirname(dirname(__dirname));
+const PRIVATE_KEY_PATH = join(ROOT_DIR, 'private-key.der');
+
+export default async function registerRoutes(
+    fastify: FastifyInstance,
+    _options: any,
+): Promise<void> {
+    const privateKeySerialized = await fs.promises.readFile(PRIVATE_KEY_PATH);
+    const privateKey = await derDeserializeRSAPrivateKey(privateKeySerialized);
+
+    // Enable the request content type "application/vnd.awala.parcel"
+    fastify.addContentTypeParser(
+        'application/vnd.awala.parcel',
+        { parseAs: 'buffer' },
+        async (_req: any, buffer: Buffer) => {
+            return bufferToArrayBuffer(buffer);
+        },
+    );
+
+    fastify.route<{ readonly Body: Buffer }>({
+        method: ['POST'],
+        url: '/',
+        async handler(request, reply): Promise<void> {
+            // Validate the request
+            if (request.headers['content-type'] !== 'application/vnd.awala.parcel') {
+                return reply.code(415).send({ message: 'Invalid Content-Type' });
+            }
+            const gatewayAddress = request.headers['x-relaynet-gateway'] || '';
+            if (gatewayAddress.length === 0) {
+                return reply
+                    .code(400)
+                    .send({ message: 'X-Relaynet-Gateway header is missing' });
+            }
+
+            // Validate the parcel
+            let parcel;
+            try {
+                parcel = await Parcel.deserialize(request.body);
+                await parcel.validate();
+            } catch (err) {
+                request.log.info({ err }, 'Refusing malformed or invalid parcel');
+                return reply.code(403).send({ message: 'Parcel is malformed or invalid' });
+            }
+            if (parcel.recipientAddress !== `https://${process.env.HTTP_HOST}`) {
+                request.log.info(
+                    { recipient: parcel.recipientAddress },
+                    'Refusing parcel bound for another endpoint'
+                );
+                return reply.code(403).send({ message: 'Invalid parcel recipient' });
+            }
+
+            // Get the ping message
+            let ping: Ping;
+            try {
+                ping = await extractPingFromParcel(parcel, privateKey);
+            } catch (err) {
+                request.log.info(
+                    { err },
+                    'Ignoring invalid/malformed service message or ping'
+                );
+                // Don't return a 40X because the gateway did nothing wrong
+                return reply.code(202).send({});
+            }
+
+            // Send the pong message
+            const pongParcel = await createPongParcel(ping, privateKey);
+            try {
+                await deliverParcel(gatewayAddress as string, pongParcel);
+            } catch (err) {
+                request.log.error({ err, gatewayAddress }, 'Failed to send pong');
+                return reply.code(500).send({ message: 'Internal server error' });
+            }
+            return reply.code(202).send({});
+        },
+    });
+}
+```
+
+Negative
+: Replay attacks.
 
 ## Send pongs
 

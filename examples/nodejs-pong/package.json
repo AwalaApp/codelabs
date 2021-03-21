@@ -21,6 +21,8 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
+    "@relaycorp/relaynet-core": "^1.42.8",
+    "@relaycorp/relaynet-pohttp": "^1.7.2",
     "fastify": "^3.14.0",
     "make-promises-safe": "^5.1.0"
   }

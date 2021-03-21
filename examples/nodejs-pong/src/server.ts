@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 8080;
 const ROUTES_DIR = join(__dirname, 'routes');
 
 async function main(): Promise<void> {
-    const server = fastify();
+    const server = fastify({ logger: true });
 
     const routes = await getAllRouteFiles();
     await Promise.all(routes.map((r) => server.register(import(r))));
