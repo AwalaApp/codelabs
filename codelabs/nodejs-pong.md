@@ -386,9 +386,9 @@ Positive
 
 ### Create a Fastify route
 
-Gateways and public endpoints exchange parcels using [Awala PoHTTP](https://specs.awala.network/RS-007), which is a simple WebHook-based protocol. You might want to refer to the PoHTTP spec when you're eventually building the production version of the app, but for now that won't be necessary.
+Gateways and public endpoints exchange parcels using [Awala PoHTTP](https://specs.awala.network/RS-007), which is a simple WebHook-based protocol. You might want to refer to the PoHTTP spec when you're eventually building the production version of a public endpoint, but for now that won't be necessary.
 
-PoHTTP requires that your server to receive parcels `POST`ed at `/`, so you're now going to create a Fastify route for `POST /`. This route will be responsible for the following:
+PoHTTP requires your server to receive parcels `POST`ed at `/`, so you're now going to create a Fastify route for `POST /`. This route will be responsible for the following:
 
 - Validate the request, and abort with the appropriate `4XX` response if the request is invalid.
 - Return a `50X` response if there's an unexpected error at any point. That will instruct the gateway to try again later.
