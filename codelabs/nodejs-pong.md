@@ -10,7 +10,7 @@ Feedback Link: https://github.com/AwalaNetwork/codelabs
 
 ## Overview
 
-Duration: 5:00
+Duration: 10:00
 
 An _Awala service_ is a collection of mobile, desktop, server-side and/or CLI apps that exchange mutually-intelligible messages using _endpoints_. Server-side apps exposed as Internet hosts will have _public endpoints_ (e.g., `your-service.com`), whilst all other apps (e.g., mobile, desktop) will have _private endpoints_.
 
@@ -41,6 +41,7 @@ Positive
 - A domain name with DNSSEC enabled and the ability to create SRV records. If you don't have one already, register a cheap one with your favourite registrar. Alternatively, if you know of a service offering this for free, use it and please [let us know about it](https://github.com/AwalaNetwork/codelabs/issues/5).
 - An Android phone or tablet running Android 5+.
 - The [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway) installed on that Android device.
+- [Android Studio](https://developer.android.com/studio). We won't assume you know how to use it, but we'll assume it's properly installed. This requirement will go away once we release [Awala Ping](https://github.com/relaycorp/relaynet-ping-android/) on the Google Play Store.
 
 ### In case you need help
 
@@ -551,6 +552,25 @@ try {
 ```
 
 Finally, import the `createPongParcel()` function at the top of the file.
+
+### Deploy the latest changes to GAE
+
+Make sure that nothing is broken by starting the server locally (`npm start:dev`) and making a POST request to `http://127.0.0.1:8080`. For example, on Linux/macOS, you can run:
+
+```shell
+curl -X POST \
+  -H 'X-Relaynet-Gateway: foo.bar' \
+  -H 'Content-Type: application/vnd.awala.parcel' \
+  http://127.0.0.1:8080
+```
+
+If you're still getting `Parcel is malformed or invalid`, that's good, so deploy the latest changes by running the following command:
+
+```shell
+gcloud app deploy
+```
+
+For good measure, make the same POST request, but this time to the `appspot.com` URL. You should get the exact same response.
 
 ## Test it with an Android app
 
