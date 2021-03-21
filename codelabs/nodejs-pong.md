@@ -382,7 +382,7 @@ function deserializeCertificate(certificateDerBase64: any): Certificate {
 ```
 
 Positive
-: Heads up: To improve security, [Awala will optionally support encryption with a different set of keys](https://github.com/relaycorp/relayverse/issues/27), instead of using identity keys (which should ideally only be used for authentication and authorisation). [The ability to encrypt with identity keys will be dropped](https://github.com/AwalaNetwork/specs/issues/84) before Awala reaches General Availability.
+: Heads up: To improve security, [Awala will support encryption with a different set of keys](https://github.com/relaycorp/relayverse/issues/27), instead of using identity keys (which should ideally only be used for authentication and authorisation). [The ability to encrypt with identity keys will be dropped](https://github.com/AwalaNetwork/specs/issues/84) before Awala reaches General Availability.
 
 ### Create a Fastify route
 
