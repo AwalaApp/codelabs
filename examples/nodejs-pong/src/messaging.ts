@@ -68,7 +68,7 @@ function deserializeCertificate(certificateDerBase64: any): Certificate {
 export async function createPongParcel(
     ping: Ping,
     pingSenderCertificate: Certificate,
-    privateKey: CryptoKey
+    privateKey: CryptoKey,
 ): Promise<Buffer> {
     const pongMessage = new ServiceMessage(
         'application/vnd.awala.ping-v1.pong',

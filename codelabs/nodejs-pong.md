@@ -10,7 +10,7 @@ Feedback Link: https://github.com/AwalaNetwork/codelabs
 
 ## Overview
 
-Duration: 10:00
+Duration: 5:00
 
 An _Awala service_ is a collection of mobile, desktop, server-side and/or CLI apps that exchange mutually-intelligible messages using _endpoints_. Server-side apps exposed as Internet hosts will have _public endpoints_ (e.g., `your-service.com`), whilst all other apps (e.g., mobile, desktop) will have _private endpoints_.
 
@@ -463,7 +463,7 @@ export default async function registerRoutes(
 ```
 
 Negative
-: Unlike private endpoints, **public endpoints are not protected against replay attacks**, so a malicious gateway could send the same parcel multiple times. This would be a problem in most cases, but you can avoid it by storing the `parcel.id` and the private address of the sender (`parcel.senderCertificate.calculateSubjectPrivateAddress()`), and refusing any future parcels matching those. You only need to keep that data around until `parcel.expiryDate`, since `parcel.validate()` will catch expired parcels.
+: Unlike private endpoints, **public endpoints are not protected against replay attacks**, so a malicious gateway could send the same parcel multiple times. This would be a problem in most cases, but you can avoid it by storing the `parcel.id` and the private address of the sender (`parcel.senderCertificate.calculateSubjectPrivateAddress()`), and refusing any future parcels matching those. You only need to keep that data around until `parcel.expiryDate`.
 
 ### Test the new route
 
@@ -486,7 +486,7 @@ Which should return the following:
 
 It's time to send pong messages back, now that you're able to receive pings.
 
-Duration: 10:00
+Duration: 5:00
 
 ### Create parcels for pong messages
 
@@ -504,7 +504,7 @@ To do this, go back to `src/messaging.ts` and add the following function:
 export async function createPongParcel(
   ping: Ping,
   pingSenderCertificate: Certificate,
-  privateKey: CryptoKey
+  privateKey: CryptoKey,
 ): Promise<Buffer> {
   const pongMessage = new ServiceMessage(
     'application/vnd.awala.ping-v1.pong',
@@ -536,7 +536,7 @@ First, you should install the PoHTTP client so that you can send parcels to publ
 npm install @relaycorp/relaynet-pohttp
 ```
 
-Then open `src/routes/pohttp.ts` and add the following **before** the last `return` statement:
+Then open `src/routes/pohttp.ts` and add the following before the last `return` statement in the route:
 
 ```typescript
 // Send the pong message
