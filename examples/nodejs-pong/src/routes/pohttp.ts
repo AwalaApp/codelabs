@@ -73,7 +73,8 @@ export default async function registerRoutes(
             }
 
             // Send the pong message
-            const pongParcel = await createPongParcel(ping, privateKey);
+            const pongParcel =
+                await createPongParcel(ping, parcel.senderCertificate, privateKey);
             try {
                 await deliverParcel(gatewayAddress as string, pongParcel);
             } catch (err) {

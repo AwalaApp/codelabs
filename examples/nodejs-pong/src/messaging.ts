@@ -1,4 +1,9 @@
-import { Certificate, Parcel } from "@relaycorp/relaynet-core";
+import {
+    Certificate,
+    Parcel,
+    ServiceMessage,
+    SessionlessEnvelopedData
+} from "@relaycorp/relaynet-core";
 
 import { bufferToArrayBuffer } from "./utils";
 
@@ -60,7 +65,24 @@ function deserializeCertificate(certificateDerBase64: any): Certificate {
     }
 }
 
-export async function createPongParcel(_ping: Ping, _privateKey: CryptoKey): Promise<Buffer> {
-    // TODO: Implement
-    return Buffer.from([]);
+export async function createPongParcel(
+    ping: Ping,
+    pingSenderCertificate: Certificate,
+    privateKey: CryptoKey
+): Promise<Buffer> {
+    const pongMessage = new ServiceMessage(
+        'application/vnd.awala.ping-v1.pong',
+        Buffer.from(ping.id),
+    );
+    const pongParcelPayload = await SessionlessEnvelopedData.encrypt(
+        pongMessage.serialize(),
+        pingSenderCertificate,
+    );
+    const pongParcel = new Parcel(
+        await pingSenderCertificate.calculateSubjectPrivateAddress(),
+        ping.pda,
+        Buffer.from(pongParcelPayload.serialize()),
+        { senderCaCertificateChain: ping.pdaChain },
+    );
+    return Buffer.from(await pongParcel.serialize(privateKey));
 }

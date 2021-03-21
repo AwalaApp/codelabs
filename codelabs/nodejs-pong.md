@@ -259,12 +259,12 @@ Duration: 10:00
 
 You've now completed the groundwork, so it's time to start receiving pings!
 
-Pings are JSON-serialised messages that contain a unique identifier and the authorisation for your public endpoint to reply with a pong message, as illustrated below:
+Pings are JSON-serialised messages that contain a unique identifier and a _Parcel Delivery Authorisation_ (PDA). The PDA is a certificate that authorises your endpoint to send a pong message to the private endpoint that sent the ping. The structure of ping messages is illustrated below:
 
 ```json
 {
   "id": "<The ping id>",
-  "pda": "<The Parcel Delivery Authorisation for the recipient (base64-encoded)>",
+  "pda": "<The PDA for the recipient (base64-encoded)>",
   "pda_chain": [
     "<PDA Chain, Certificate #1 (base64-encoded)>",
     "..."
@@ -367,7 +367,10 @@ function deserializeCertificate(certificateDerBase64: any): Certificate {
 }
 ```
 
-### Create Fastify route
+Positive
+: To improve security, [Awala will optionally support doing encryption with a different set of keys](https://github.com/relaycorp/relayverse/issues/27), instead of using identity keys (which should ideally only be used for authentication and authorisation). [The ability to do encryption with identity keys will be dropped](https://github.com/AwalaNetwork/specs/issues/84) before Awala reaches General Availability.
+
+### Create a Fastify route
 
 Gateways and public endpoints exchange parcels using [Awala PoHTTP](https://specs.awala.network/RS-007), which is a simple WebHook-based protocol. You might want to refer to the PoHTTP spec when you're eventually building the production version of the app, but for now that won't be necessary.
 
@@ -460,7 +463,7 @@ export default async function registerRoutes(
 ```
 
 Negative
-: Unlike private endpoints, **public endpoints are not protected against replay attacks**, so a malicious gateway could send the same parcel multiple times. This would be a problem in most cases, but you can avoid it by storing the `parcel.id` and the private address of the sender (`parcel.senderCertificate.subjectPrivateAddress`), and refusing any future parcels matching those. You only need to keep that data around until `parcel.expiryDate`, since `parcel.validate()` will catch expired parcels.
+: Unlike private endpoints, **public endpoints are not protected against replay attacks**, so a malicious gateway could send the same parcel multiple times. This would be a problem in most cases, but you can avoid it by storing the `parcel.id` and the private address of the sender (`parcel.senderCertificate.calculateSubjectPrivateAddress()`), and refusing any future parcels matching those. You only need to keep that data around until `parcel.expiryDate`, since `parcel.validate()` will catch expired parcels.
 
 ### Test the new route
 
@@ -481,25 +484,73 @@ Which should return the following:
 
 ## Send pongs
 
+It's time to send pong messages back, now that you're able to receive pings.
+
 Duration: 10:00
 
-Go back to `src/messaging.ts` and add the following function:
+### Create parcels for pong messages
+
+Serialising pong messages is really simple, as the message content is just a string representing their respective ping id. It doesn't use JSON.
+
+Once the pong service message is serialised, the next step is to put it inside a parcel by:
+
+1. Attaching the encrypted service message to the parcel.
+1. Attaching the PDA and its chain to the parcel.
+1. Signing the parcel with the public endpoint's identity key.
+
+To do this, go back to `src/messaging.ts` and add the following function:
 
 ```typescript
-export async function createPongParcel(_ping: Ping, _privateKey: CryptoKey): Promise<Buffer> {
-  // TODO: Implement
-  return Buffer.from([]);
+export async function createPongParcel(
+  ping: Ping,
+  pingSenderCertificate: Certificate,
+  privateKey: CryptoKey
+): Promise<Buffer> {
+  const pongMessage = new ServiceMessage(
+    'application/vnd.awala.ping-v1.pong',
+    Buffer.from(ping.id),
+  );
+  const pongParcelPayload = await SessionlessEnvelopedData.encrypt(
+    pongMessage.serialize(),
+    pingSenderCertificate,
+  );
+  const pongParcel = new Parcel(
+    await pingSenderCertificate.calculateSubjectPrivateAddress(),
+    ping.pda,
+    Buffer.from(pongParcelPayload.serialize()),
+    { senderCaCertificateChain: ping.pdaChain },
+  );
+  return Buffer.from(await pongParcel.serialize(privateKey));
 }
 ```
+
+Make sure to add the missing imports from `@relaycorp/relaynet-core`.
+
+### Send parcels to the public gateway
+
+For expediency, you're going to send the parcel containing the pong message within the same process, before returning the HTTP response. However, you should consider using a background queue in production, such as one backed by [Redis](https://www.npmjs.com/package/bull) or [GCP PubSub](https://cloud.google.com/pubsub).
+
+First, you should install the PoHTTP client so that you can send parcels to public gateways:
 
 ```shell
 npm install @relaycorp/relaynet-pohttp
 ```
 
-Positive
-: Use background queue in production.
+Then open `src/routes/pohttp.ts` and add the following **before** the last `return` statement:
 
-- Create a parcel containing a pong message for the incoming ping, and post it to the public gateway. However, in production you should push incoming service messages to a background queue backed by [Redis](https://www.npmjs.com/package/bull), for example.
+```typescript
+// Send the pong message
+const pongParcel =
+  await createPongParcel(ping, parcel.senderCertificate, privateKey);
+try {
+  await deliverParcel(gatewayAddress as string, pongParcel);
+} catch (err) {
+  request.log.error({ err, gatewayAddress }, 'Failed to send pong');
+  return reply.code(500).send({ message: 'Internal server error' });
+}
+```
+
+Finally, import the `createPongParcel()` function at the top of the file.
 
 ## Test it with an Android app
 
