@@ -304,8 +304,8 @@ function deserializeCertificate(certificateDerBase64: any): Certificate {
 <aside class="special"><p>Heads up: To improve security, <a href="https://github.com/relaycorp/relayverse/issues/27" target="_blank">Awala will support encryption with a different set of keys</a>, instead of using identity keys (which should ideally only be used for authentication and authorisation). <a href="https://github.com/AwalaNetwork/specs/issues/84" target="_blank">The ability to encrypt with identity keys will be dropped</a> before Awala reaches General Availability.</p>
 </aside>
 <h2 is-upgraded>Create a Fastify route</h2>
-<p>Gateways and public endpoints exchange parcels using <a href="https://specs.awala.network/RS-007" target="_blank">Awala PoHTTP</a>, which is a simple WebHook-based protocol. You might want to refer to the PoHTTP spec when you&#39;re eventually building the production version of the app, but for now that won&#39;t be necessary.</p>
-<p>PoHTTP requires that your server to receive parcels <code>POST</code>ed at <code>/</code>, so you&#39;re now going to create a Fastify route for <code>POST /</code>. This route will be responsible for the following:</p>
+<p>Gateways and public endpoints exchange parcels using <a href="https://specs.awala.network/RS-007" target="_blank">Awala PoHTTP</a>, which is a simple WebHook-based protocol. You might want to refer to the PoHTTP spec when you&#39;re eventually building the production version of a public endpoint, but for now that won&#39;t be necessary.</p>
+<p>PoHTTP requires your server to receive parcels <code>POST</code>ed at <code>/</code>, so you&#39;re now going to create a Fastify route for <code>POST /</code>. This route will be responsible for the following:</p>
 <ul>
 <li>Validate the request, and abort with the appropriate <code>4XX</code> response if the request is invalid.</li>
 <li>Return a <code>50X</code> response if there&#39;s an unexpected error at any point. That will instruct the gateway to try again later.</li>
