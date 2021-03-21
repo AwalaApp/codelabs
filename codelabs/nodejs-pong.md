@@ -142,8 +142,8 @@ Negative
 
 Create an SRV record under the domain you wish to use using the following parameters:
 
-- Domain name: `_rpdc._tcp.your-domain.com` if you want `your-domain.com` to be the public address, or `_rpdc._tcp.subdomain.your-domain.com` if you want `subdomain.your-domain.com` to be the public address. Alternatively, if you have to specify these fields separately, use:
-  - Service: `_rpdc`.
+- Domain name: `_awala-pdc._tcp.your-domain.com` if you want `your-domain.com` to be the public address, or `_awala-pdc._tcp.subdomain.your-domain.com` if you want `subdomain.your-domain.com` to be the public address. Alternatively, if you have to specify these fields separately, use:
+  - Service: `_awala-pdc`.
   - Protocol: `_tcp` or TCP.
   - Name: `your-domain.com` or `subdomain.your-domain.com`.
 - Value: `0 5 443 [YOUR-GAE-APP-DOMAIN]`. Alternatively, if you have to specify these fields separately, use:
@@ -156,7 +156,7 @@ For example, if you were to map the public address `pong-codelab.awala.services`
 
 ![](images/nodejs-pong/srv-record-cloudflare.png)
 
-You can use [dnschecker.org](https://dnschecker.org/#SRV/_rpdc._tcp.ping.awala.services) to monitor the propagation of the new DNS record in a new web browser tab, so that you can continue with the rest of the codelab.
+You can use [dnschecker.org](https://dnschecker.org/#SRV/_awala-pdc._tcp.ping.awala.services) to monitor the propagation of the new DNS record in a new web browser tab, so that you can continue with the rest of the codelab.
 
 ### Set the public address in the app
 
@@ -593,7 +593,7 @@ It's finally time to test your public endpoint! You're going to test it with the
 
 ### Check the SRV record propagation
 
-But first, make sure that the SRV record you created earlier is up and running by going to [dnschecker.org](https://dnschecker.org/#SRV/_rpdc._tcp.ping.awala.services) (replace `ping.awala.services` with the public address of your endpoint).
+But first, make sure that the SRV record you created earlier is up and running by going to [dnschecker.org](https://dnschecker.org/#SRV/_awala-pdc._tcp.ping.awala.services) (replace `ping.awala.services` with the public address of your endpoint).
 
 If it doesn't look right, please check with your DNS hosting provider and/or registrar.
 
