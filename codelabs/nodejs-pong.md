@@ -175,7 +175,7 @@ Duration: 5:00
 
 Awala requires _nodes_ (i.e., gateways and endpoints) to have long-term _identity certificates_ in order for nodes to authenticate and authorise each other. Consequently, each message must be signed by the sender, and the sender's certificate must be attached to the message. Additionally, messages bound for private endpoints must contain a _certificate chain_ that includes the recipient's private gateway certificate.
 
-Whilst this certainly impacts performance, it allows Awala to prevent abuse whilst protecting the privacy of end users in a highly-scalable manner: Nodes can verify that messages are authorised to reach the destination without leaking the identity of the human user behind private endpoints -- and without having to store any authorisation data.
+Whilst this certainly impacts performance, it allows Awala to prevent abuse whilst protecting the privacy of end users in a highly-scalable manner: Nodes can verify that messages are authorised to reach the destination without leaking anything that could identify the human user behind private endpoints -- and without having to store any authorisation data.
 
 You're going to use [`relaydev`](https://www.npmjs.com/package/@relaycorp/relaydev) to generate the identity certificate for your endpoint.
 
@@ -382,7 +382,7 @@ function deserializeCertificate(certificateDerBase64: any): Certificate {
 ```
 
 Positive
-: To improve security, [Awala will optionally support doing encryption with a different set of keys](https://github.com/relaycorp/relayverse/issues/27), instead of using identity keys (which should ideally only be used for authentication and authorisation). [The ability to do encryption with identity keys will be dropped](https://github.com/AwalaNetwork/specs/issues/84) before Awala reaches General Availability.
+: Heads up: To improve security, [Awala will optionally support encryption with a different set of keys](https://github.com/relaycorp/relayverse/issues/27), instead of using identity keys (which should ideally only be used for authentication and authorisation). [The ability to encrypt with identity keys will be dropped](https://github.com/AwalaNetwork/specs/issues/84) before Awala reaches General Availability.
 
 ### Create a Fastify route
 
@@ -508,7 +508,7 @@ Serialising pong messages is really simple, as the message content is just a str
 
 Once the pong service message is serialised, the next step is to put it inside a parcel by:
 
-1. Attaching the encrypted service message to the parcel.
+1. Putting the encrypted service message in the parcel.
 1. Attaching the PDA and its chain to the parcel.
 1. Signing the parcel with the public endpoint's identity key.
 
@@ -647,7 +647,7 @@ Well done! You've just built an Android app for a centralised Awala service.
 When you're done testing the public endpoint you created, do the following to delete the resources you created:
 
 Negative
-: If you created other GCP resources outside this codelab, those will be deleted too.
+: If you created additional GCP resources in this project, those will be deleted too.
 
 1. Go to the [GCP resource manager](https://console.cloud.google.com/cloud-resource-manager).
 1.  In the project list, select the project that you want to delete, and then click _Delete_.
@@ -658,4 +658,4 @@ Negative
 - Learn more about the [architecture of Awala services](https://awala.network/service-providers/implementation/architecture).
 - Read the [documentation for the Awala Node.js library](https://docs.relaycorp.tech/relaynet-core-js/).
 - [Join the Awala community](https://community.awala.network/) and give us some feedback on the codelab.
-- [Share what you've just done on Twitter](https://twitter.com/intent/tweet?url=https%3A%2F%2Fawala.network%2Fservice-providers%2F&via=AwalaNetwork&text=I%27ve%20just%20built%20an%20app%20that%20can%20sync%20with%20the%20Internet%20even%20if%20the%20user%20is%20disconnected%20from%20it%21).
+- [Spread the word on Twitter!](https://twitter.com/intent/tweet?url=https%3A%2F%2Fawala.network%2Fservice-providers%2F&via=AwalaNetwork&text=I%27ve%20just%20built%20an%20app%20that%20can%20sync%20with%20the%20Internet%20even%20if%20the%20user%20is%20disconnected%20from%20it%21)
