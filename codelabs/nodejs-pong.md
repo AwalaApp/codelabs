@@ -589,6 +589,53 @@ For good measure, make the same POST request, but this time to the `appspot.com`
 
 Duration: 10:00
 
+It's finally time to test your public endpoint! You're going to test it with the Android app built for the [Android Centralised codelab](https://codelabs.awala.network/codelabs/android-centralised/).
+
+### Check the SRV record propagation
+
+But first, make sure that the SRV record you created earlier is up and running by going to [dnschecker.org](https://dnschecker.org/#SRV/_rpdc._tcp.ping.awala.services) (replace `ping.awala.services` with the public address of your endpoint).
+
+If it doesn't look right, please check with your DNS hosting provider and/or registrar.
+
+### Set up the Android app locally
+
+Positive
+: You can skip this if you've already done the Android Centralised codelab and still have the app configured in Android Studio.
+
+First, [download the Android app](https://codelabs.awala.network/examples/android-centralised.zip) and unzip it.
+
+Start Android Studio, and open the directory containing the app. If you're using Android Studio for the first time, you'll get a shortcut to open an existing project. Otherwise, go to `File` -> `Open...`.
+
+Now install the app on your Android device by going to `Run` -> `Run 'app'`. After a few minutes, the app should start in the device.
+
+![](images/nodejs-pong/android-studio-run-app.png)
+
+Make sure the device is connected to the Internet and then press "Send ping" to make sure you're able to communicate with the public endpoint at `ping.awala.services`. If everything works as expected, your pings should be getting their respective pong messages as shown in the screen below:
+
+![](images/android-centralised/app-screenshot.png)
+
+### Use your own endpoint
+
+Now it's time to use your own public endpoint.
+
+First, uninstall the Ping app or clear its data. This is important to make sure it will use your own endpoint's parameters.
+
+Then open `App.kt` and replace `ping.awala.services` with your own endpoint's public address -- the one you created the SRV record for.
+
+Finally, replace `app/src/main/res/raw/pub_endpoint_identity.der` with your endpoint's identity certificate. On Linux/macOS, you can run the following command (using the correct `appspot.com` domain):
+
+```shell
+curl \
+  -o app/src/main/res/raw/pub_endpoint_identity.der \
+  https://pong-codelab.nw.r.appspot.com/identity.der
+```
+
+### Test it!
+
+Reinstall the app on your Android device and try sending more pings -- you should be getting pongs back!
+
+You might want to check the [app logs](https://console.cloud.google.com/logs/query), to make sure that it is indeed your endpoint processing those pings (instead of `ping.awala.services`), or in case the Android app isn't getting pong messages back.
+
 ## That's it!
 
 Duration: 5:00
@@ -609,6 +656,6 @@ Negative
 ### What's next?
 
 - Learn more about the [architecture of Awala services](https://awala.network/service-providers/implementation/architecture).
-- Read the [API documentation for awaladroid](https://docs.relaycorp.tech/awala-endpoint-android/).
+- Read the [documentation for the Awala Node.js library](https://docs.relaycorp.tech/relaynet-core-js/).
 - [Join the Awala community](https://community.awala.network/) and give us some feedback on the codelab.
 - [Share what you've just done on Twitter](https://twitter.com/intent/tweet?url=https%3A%2F%2Fawala.network%2Fservice-providers%2F&via=AwalaNetwork&text=I%27ve%20just%20built%20an%20app%20that%20can%20sync%20with%20the%20Internet%20even%20if%20the%20user%20is%20disconnected%20from%20it%21).
