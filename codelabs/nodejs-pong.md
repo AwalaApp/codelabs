@@ -433,11 +433,11 @@ export default async function registerRoutes(
       if (request.headers['content-type'] !== 'application/vnd.awala.parcel') {
         return reply.code(415).send({ message: 'Invalid Content-Type' });
       }
-      const gatewayAddress = request.headers['x-relaynet-gateway'] || '';
+      const gatewayAddress = request.headers['x-awala-gateway'] || '';
       if (gatewayAddress.length === 0) {
         return reply
           .code(400)
-          .send({ message: 'X-Relaynet-Gateway header is missing' });
+          .send({ message: 'X-Awala-Gateway header is missing' });
       }
 
       // Validate the parcel
@@ -485,7 +485,7 @@ Make sure that the new route is working fine by starting the server locally (`np
 
 ```shell
 curl -X POST \
-  -H 'X-Relaynet-Gateway: foo.bar' \
+  -H 'X-Awala-Gateway: foo.bar' \
   -H 'Content-Type: application/vnd.awala.parcel' \
   http://127.0.0.1:8080
 ```
@@ -572,7 +572,7 @@ Make sure that nothing is broken by starting the server locally (`npm start:dev`
 
 ```shell
 curl -X POST \
-  -H 'X-Relaynet-Gateway: foo.bar' \
+  -H 'X-Awala-Gateway: foo.bar' \
   -H 'Content-Type: application/vnd.awala.parcel' \
   http://127.0.0.1:8080
 ```

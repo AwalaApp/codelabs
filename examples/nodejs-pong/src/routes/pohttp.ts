@@ -35,11 +35,11 @@ export default async function registerRoutes(
             if (request.headers['content-type'] !== 'application/vnd.awala.parcel') {
                 return reply.code(415).send({ message: 'Invalid Content-Type' });
             }
-            const gatewayAddress = request.headers['x-relaynet-gateway'] || '';
+            const gatewayAddress = request.headers['x-awala-gateway'] || '';
             if (gatewayAddress.length === 0) {
                 return reply
                     .code(400)
-                    .send({ message: 'X-Relaynet-Gateway header is missing' });
+                    .send({ message: 'X-Awala-Gateway header is missing' });
             }
 
             // Validate the parcel
