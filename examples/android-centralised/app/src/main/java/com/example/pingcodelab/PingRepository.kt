@@ -43,7 +43,7 @@ class PingRepository(
     fun observe() = repo.asFlow()
 
     fun get(id: String) =
-        repo.get().first { it.id == id }
+        repo.get().firstOrNull { it.id == id }
 
     suspend fun set(message: Ping) {
         repo.setAndCommit(

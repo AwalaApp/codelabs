@@ -72,7 +72,9 @@ class App : Application() {
         GatewayClient.receiveMessages().collect {
             val pingId = extractPingIdFromPongMessage(it.content)
             val pingMessage = pingRepository.get(pingId)
-            pingRepository.set(pingMessage.copy(pongDate = System.currentTimeMillis()))
+            if (pingMessage != null) {
+                pingRepository.set(pingMessage.copy(pongDate = System.currentTimeMillis()))
+            }
 
             it.ack()
         }
