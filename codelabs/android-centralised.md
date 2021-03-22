@@ -646,3 +646,4 @@ Well done! You've just built an Android app for a centralised Awala service.
 - Read the [API documentation for awaladroid](https://docs.relaycorp.tech/awala-endpoint-android/).
 - [Join the Awala community](https://community.awala.network/) and give us some feedback on the codelab.
 - [Spread the word on Twitter!](https://twitter.com/intent/tweet?url=https%3A%2F%2Fawala.network%2Fservice-providers%2F&via=AwalaNetwork&text=I%27ve%20just%20built%20an%20app%20that%20can%20sync%20with%20the%20Internet%20even%20if%20the%20user%20is%20disconnected%20from%20it%21)
+- Make your Android app communicate with your own public endpoint by doing the [Node.js public endpoint codelab](/codelabs/nodejs-pong/).
