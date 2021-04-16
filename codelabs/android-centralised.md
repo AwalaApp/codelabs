@@ -58,7 +58,7 @@ Let's create a new project on Android Studio by going to `File` -> `New` -> `New
 
 ![](./images/android-centralised/android-studio-project-template.png)
 
-In the final screen, make sure to leave Kotlin as the programming language and API 21 as the minimum Android SDK.
+In the final screen, make sure to leave Kotlin as the programming language and API 26 as the minimum Android SDK ([we plan to restore support for API 21-25 soon](https://github.com/relaycorp/awala-endpoint-android/issues/87)).
 
 ![](./images/android-centralised/android-studio-project-config.png)
 
