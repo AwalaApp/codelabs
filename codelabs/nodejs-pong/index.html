@@ -38,8 +38,7 @@
 <p>On the other hand, pong messages do the same route in reverse:</p>
 <p class="image-container"><img src="img/e49a74cb42c3ed18.png"></p>
 <p>Awala requires messages bound for private endpoints to be pre-authorised by the recipient, so each ping message includes an authorisation for the recipient (e.g., <code>ping.awala.services</code>) to reply with a pong message. In most services, authorisations would be issued once and renewed periodically, but public endpoints in the Ping service are meant to be stateless, so private endpoints have to issue an authorisation each time.</p>
-<aside class="special"><p>The Ping service uses a request-response pattern because its sole purpose is to test that endpoints can send and receive data. However, <strong>endpoints in your own services can send messages at any time</strong> and there&#39;s no requirement to respond to messages. Your endpoints should just push data to their peers whenever new data is available, without waiting for anyone else to &#34;initiate&#34; the communication.</p>
-</aside>
+<p>Positive : The Ping service uses a request-response pattern because its sole purpose is to test that endpoints can send and receive data. However, <strong>endpoints in your own services can send messages at any time</strong> and there&#39;s no requirement to respond to messages. Your endpoints should just push data to their peers whenever new data is available, without waiting for anyone else to &#34;initiate&#34; the communication.</p>
 <h2 is-upgraded>What you&#39;ll need</h2>
 <ul>
 <li>Very basic understanding of Node.js, JavaScript/TypeScript and HTTP.</li>
@@ -67,8 +66,7 @@
 <p><a href="https://cloud.google.com/sdk/docs/install" target="_blank">Install and initialize the GCP SDK</a>, and then make the new project the default:</p>
 <pre><code language="language-shell" class="language-shell">gcloud config set project [YOUR_PROJECT_ID]
 </code></pre>
-<aside class="warning"><p>It&#39;s important not to skip the command above if you&#39;re already using GCP. Otherwise, you&#39;ll end up modifying one of your existing projects.</p>
-</aside>
+<p>Negative : It&#39;s important not to skip the command above if you&#39;re already using GCP. Otherwise, you&#39;ll end up modifying one of your existing projects.</p>
 <h2 is-upgraded>Deploy the app template</h2>
 <p>You&#39;re now going to deploy a trivial app to GAE to make sure everything is working so far. You&#39;re going to build on this app to implement the public endpoint later.</p>
 <p>Start by creating the GAE app for your project in the region of your choosing:</p>
@@ -107,24 +105,21 @@ npm run build
 <p>Go to <a href="https://dnssec-analyzer.verisignlabs.com" target="_blank">dnssec-analyzer.verisignlabs.com</a> and check that your domain has DNSSEC properly configured. If that&#39;s the case, you&#39;ll see a screen like this:</p>
 <p class="image-container"><img src="img/92be9f549f415ae2.png"></p>
 <p>If any issues are reported, check the documentation of your DNS hosting provider and/or registrar to resolve them.</p>
-<aside class="warning"><p>For security reasons, Awala gateways will communicate with your public endpoint if and only if DNS answers have valid DNSSEC signatures.</p>
-</aside>
+<p>Negative : For security reasons, Awala gateways will communicate with your public endpoint if and only if DNS answers have valid DNSSEC signatures.</p>
 <h2 is-upgraded>Create the record</h2>
 <p>Create an SRV record under the domain you wish to use using the following parameters:</p>
 <ul>
-<li>Domain name: <code>_awala-pdc._tcp.your-domain.com</code> if you want <code>your-domain.com</code> to be the public address, or <code>_awala-pdc._tcp.subdomain.your-domain.com</code> if you want <code>subdomain.your-domain.com</code> to be the public address. Alternatively, if you have to specify these fields separately, use:  <ul>
+<li>Domain name: <code>_awala-pdc._tcp.your-domain.com</code> if you want <code>your-domain.com</code> to be the public address, or <code>_awala-pdc._tcp.subdomain.your-domain.com</code> if you want <code>subdomain.your-domain.com</code> to be the public address. Alternatively, if you have to specify these fields separately, use: <ul>
 <li>Service: <code>_awala-pdc</code>.</li>
 <li>Protocol: <code>_tcp</code> or TCP.</li>
 <li>Name: <code>your-domain.com</code> or <code>subdomain.your-domain.com</code>.</li>
 </ul>
 </li>
-<li>Value: <code>0 5 443 [YOUR-GAE-APP-DOMAIN]</code>. Alternatively, if you have to specify these fields separately, use:  <ul>
+<li>Value: <code>0 5 443 [YOUR-GAE-APP-DOMAIN]</code>. Alternatively, if you have to specify these fields separately, use:</li>
 <li>Priority: <code>0</code>.</li>
 <li>Weight: <code>5</code>.</li>
 <li>Port: <code>443</code>.</li>
 <li>Target: Your GAE app domain (e.g., <code>pong-codelab.nw.r.appspot.com</code>).</li>
-</ul>
-</li>
 </ul>
 <p>For example, if you were to map the public address <code>pong-codelab.awala.services</code> to <code>https://pong-codelab.nw.r.appspot.com</code> using Cloudflare as the DNS provider, you&#39;d do the following:</p>
 <p class="image-container"><img src="img/71e270bfb5a3b6c3.png"></p>
@@ -143,14 +138,12 @@ npm run build
         <p>Awala requires <em>nodes</em> (i.e., gateways and endpoints) to have long-term <em>identity certificates</em> in order for nodes to authenticate and authorise each other. Consequently, each message must be signed by the sender, and the sender&#39;s certificate must be attached to the message. Additionally, messages bound for private endpoints must contain a <em>certificate chain</em> that includes the recipient&#39;s private gateway certificate.</p>
 <p>Whilst this certainly impacts performance, it allows Awala to prevent abuse whilst protecting the privacy of end users in a highly-scalable manner: Nodes can verify that messages are authorised to reach the destination without leaking anything that could identify the human user behind private endpoints – and without having to store any authorisation data.</p>
 <p>You&#39;re going to use <a href="https://www.npmjs.com/package/@relaycorp/relaydev" target="_blank"><code>relaydev</code></a> to generate the identity certificate for your endpoint.</p>
-<aside class="special"><p>In addition to high-level libraries and tools like <code>relaydev</code>, we&#39;re planning to take things further by <a href="https://github.com/relaycorp/relayverse/issues/28" target="_blank">completely taking the key management off your plate</a>.</p>
-</aside>
+<p>Positive : In addition to high-level libraries and tools like <code>relaydev</code>, we&#39;re planning to take things further by <a href="https://github.com/relaycorp/relayverse/issues/28" target="_blank">completely taking the key management off your plate</a>.</p>
 <h2 is-upgraded>Generate a key pair</h2>
 <p>First, you need to generate the identity key:</p>
 <pre><code language="language-shell" class="language-shell">npx @relaycorp/relaydev key gen-rsa &gt; private-key.der
 </code></pre>
-<aside class="warning"><p>You&#39;re about to deploy this app along with the private key above for expediency, but in production you should absolutely use a secret management tool instead. We recommend <a href="https://www.vaultproject.io/" target="_blank">Vault</a> and offer an <a href="https://github.com/relaycorp/keystore-vault-js" target="_blank">official library</a> that integrates seamlessly in Awala.</p>
-</aside>
+<p>Negative : You&#39;re about to deploy this app along with the private key above for expediency, but in production you should absolutely use a secret management tool instead. We recommend <a href="https://www.vaultproject.io/" target="_blank">Vault</a> and offer an <a href="https://github.com/relaycorp/keystore-vault-js" target="_blank">official library</a> that integrates seamlessly in Awala.</p>
 <h2 is-upgraded>Self-issue a certificate</h2>
 <p>Extract the public key from the key pair above:</p>
 <pre><code language="language-shell" class="language-shell">npx @relaycorp/relaydev key get-rsa-pub &lt; private-key.der &gt; public-key.der
@@ -301,8 +294,7 @@ function deserializeCertificate(certificateDerBase64: any): Certificate {
   }
 }
 </code></pre>
-<aside class="special"><p>Heads up: To improve security, <a href="https://github.com/relaycorp/relayverse/issues/27" target="_blank">Awala will support encryption with a different set of keys</a>, instead of using identity keys (which should ideally only be used for authentication and authorisation). <a href="https://github.com/AwalaNetwork/specs/issues/84" target="_blank">The ability to encrypt with identity keys will be dropped</a> before Awala reaches General Availability.</p>
-</aside>
+<p>Positive : Heads up: To improve security, <a href="https://github.com/relaycorp/relayverse/issues/27" target="_blank">Awala will support encryption with a different set of keys</a>, instead of using identity keys (which should ideally only be used for authentication and authorisation). <a href="https://github.com/AwalaNetwork/specs/issues/84" target="_blank">The ability to encrypt with identity keys will be dropped</a> before Awala reaches General Availability.</p>
 <h2 is-upgraded>Create a Fastify route</h2>
 <p>Gateways and public endpoints exchange parcels using <a href="https://specs.awala.network/RS-007" target="_blank">Awala PoHTTP</a>, which is a simple WebHook-based protocol. You might want to refer to the PoHTTP spec when you&#39;re eventually building the production version of a public endpoint, but for now that won&#39;t be necessary.</p>
 <p>PoHTTP requires your server to receive parcels <code>POST</code>ed at <code>/</code>, so you&#39;re now going to create a Fastify route for <code>POST /</code>. This route will be responsible for the following:</p>
@@ -390,8 +382,7 @@ export default async function registerRoutes(
   });
 }
 </code></pre>
-<aside class="warning"><p>Unlike private endpoints, <strong>public endpoints are not protected against replay attacks</strong>, so a malicious gateway could send the same parcel multiple times. This would be a problem in most cases, but you can avoid it by storing the <code>parcel.id</code> and the private address of the sender (<code>parcel.senderCertificate.calculateSubjectPrivateAddress()</code>), and refusing any future parcels matching those. You only need to keep that data around until <code>parcel.expiryDate</code>.</p>
-</aside>
+<p>Negative : Unlike private endpoints, <strong>public endpoints are not protected against replay attacks</strong>, so a malicious gateway could send the same parcel multiple times. This would be a problem in most cases, but you can avoid it by storing the <code>parcel.id</code> and the private address of the sender (<code>parcel.senderCertificate.calculateSubjectPrivateAddress()</code>), and refusing any future parcels matching those. You only need to keep that data around until <code>parcel.expiryDate</code>.</p>
 <h2 is-upgraded>Test the new route</h2>
 <p>Make sure that the new route is working fine by starting the server locally (<code>npm start:dev</code>) and making a <code>POST</code> request to it. For example, on Linux/macOS, you can run:</p>
 <pre><code language="language-shell" class="language-shell">curl -X POST \
@@ -478,11 +469,10 @@ try {
 <p>But first, make sure that the SRV record you created earlier is up and running by going to <a href="https://dnschecker.org/#SRV/_awala-pdc._tcp.ping.awala.services" target="_blank">dnschecker.org</a> (replace <code>ping.awala.services</code> with the public address of your endpoint).</p>
 <p>If it doesn&#39;t look right, please check with your DNS hosting provider and/or registrar.</p>
 <h2 is-upgraded>Set up the Android app locally</h2>
-<aside class="special"><p>You can skip this if you&#39;ve already done the Android Centralised codelab and still have the app configured in Android Studio.</p>
-</aside>
+<p>Positive : You can skip this if you&#39;ve already done the Android Centralised codelab and still have the app configured in Android Studio.</p>
 <p>First, <a href="https://codelabs.awala.network/examples/android-centralised.zip" target="_blank">download the Android app</a> and unzip it.</p>
 <p>Start Android Studio, and open the directory containing the app. If you&#39;re using Android Studio for the first time, you&#39;ll get a shortcut to open an existing project. Otherwise, go to <code>File</code> -&gt; <code>Open...</code>.</p>
-<p>Now install the app on your Android device by going to <code>Run</code> -&gt; <code>Run &#39;app&#39;</code>. After a few minutes, the app should start in the device.</p>
+<p>Now install the app on your Android device by going to <code>Run</code> -&gt; <code>Run 'app'</code>. After a few minutes, the app should start in the device.</p>
 <p class="image-container"><img src="img/58917d6117447afa.png"></p>
 <p>Make sure the device is connected to the Internet and then press &#34;Send ping&#34; to make sure you&#39;re able to communicate with the public endpoint at <code>ping.awala.services</code>. If everything works as expected, your pings should be getting their respective pong messages as shown in the screen below:</p>
 <p class="image-container"><img src="img/6214ecdb1bfe0126.png"></p>
@@ -506,8 +496,7 @@ try {
         <p>Well done! You&#39;ve just built an Android app for a centralised Awala service.</p>
 <h2 is-upgraded>Delete the GCP project</h2>
 <p>When you&#39;re done testing the public endpoint you created, do the following to delete the resources you created:</p>
-<aside class="warning"><p>If you created additional GCP resources in this project, those will be deleted too.</p>
-</aside>
+<p>Negative : If you created additional GCP resources in this project, those will be deleted too.</p>
 <ol type="1">
 <li>Go to the <a href="https://console.cloud.google.com/cloud-resource-manager" target="_blank">GCP resource manager</a>.</li>
 <li>In the project list, select the project that you want to delete, and then click <em>Delete</em>.</li>
