@@ -539,9 +539,10 @@ private suspend fun sendPing() {
     GatewayClient.bind()
 
     val pingId = UUID.randomUUID().toString()
+    val expiryDate = ZonedDateTime.now().plusDays(3)
     val authorization = context.sender.issueAuthorization(
         context.recipient,
-        ZonedDateTime.now().plusDays(3)
+        expiryDate
     )
     val pingMessageSerialized = serializePingMessage(
         pingId,
@@ -549,10 +550,11 @@ private suspend fun sendPing() {
         authorization.pdaChainSerialized
     )
     val outgoingMessage = OutgoingMessage.build(
-        "application/vnd.relaynet.ping-v1.ping",
+        "application/vnd.awala.ping-v1.ping",
         pingMessageSerialized,
         context.sender,
-        context.recipient
+        context.recipient,
+        parcelExpiryDate = expiryDate
     )
     GatewayClient.sendMessage(outgoingMessage)
     val pingMessage = Ping(pingId)
