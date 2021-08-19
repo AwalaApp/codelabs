@@ -92,10 +92,10 @@ Then add the following inside `dependencies { ... }`:
     // Support modern Java classes (e.g., ZonedDateTime)
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
     // Awala
-    implementation 'com.github.relaycorp:awala-endpoint-android:1.6.5'
+    implementation 'com.github.relaycorp:awala-endpoint-android:1.6.13'
     // Preferences
     implementation 'androidx.preference:preference-ktx:1.1.1'
-    implementation 'com.github.tfcporciuncula.flow-preferences:flow-preferences:1.3.4'
+    implementation 'com.fredporciuncula:flow-preferences:1.5.0'
     implementation 'com.squareup.moshi:moshi:1.9.3'
     implementation 'com.squareup.moshi:moshi-kotlin:1.9.3'
 ```
@@ -122,8 +122,8 @@ package com.example.pingcodelab
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
-import com.tfcporciuncula.flow.FlowSharedPreferences
-import com.tfcporciuncula.flow.Serializer
+import com.fredporciuncula.flow.preferences.FlowSharedPreferences
+import com.fredporciuncula.flow.preferences.Serializer
 
 data class Ping(
     val id: String,
@@ -194,7 +194,7 @@ package com.example.pingcodelab
 import android.app.Application
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import com.tfcporciuncula.flow.FlowSharedPreferences
+import com.fredporciuncula.flow.preferences.FlowSharedPreferences
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import tech.relaycorp.awaladroid.Awala

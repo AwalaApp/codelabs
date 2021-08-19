@@ -2,8 +2,8 @@ package com.example.pingcodelab
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
-import com.tfcporciuncula.flow.FlowSharedPreferences
-import com.tfcporciuncula.flow.Serializer
+import com.fredporciuncula.flow.preferences.FlowSharedPreferences
+import com.fredporciuncula.flow.preferences.Serializer
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 data class Ping(
