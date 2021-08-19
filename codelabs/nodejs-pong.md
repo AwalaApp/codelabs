@@ -39,9 +39,7 @@ Positive
 - [Node.js](https://nodejs.org/en/download/) 14+. We'll assume that `npm`, `npx` and `node` are in your `$PATH`.
 - A [Google Cloud Platform](https://cloud.google.com/) (GCP) account. As of this writing, running this codelab alone won't exceed your [free quota](https://cloud.google.com/appengine/quotas).
 - A domain name with DNSSEC enabled and the ability to create SRV records. If you don't have one already, register a cheap one with your favourite registrar. Alternatively, if you know of a service offering this for free, use it and please [let us know about it](https://github.com/AwalaNetwork/codelabs/issues/5).
-- An Android phone or tablet running Android 5+.
-- The [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway) installed on that Android device.
-- [Android Studio](https://developer.android.com/studio). We won't assume you know how to use it, but we'll assume it's properly installed. This requirement will go away once we release [Awala Ping](https://github.com/relaycorp/relaynet-ping-android/) on the Google Play Store.
+- An Android phone or tablet running Android 5+, with the [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway) and the [Awala Ping](https://play.google.com/store/apps/details?id=tech.relaycorp.ping) apps installed.
 
 ### In case you need help
 
