@@ -50,13 +50,10 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
-    // Android
-    implementation 'org.conscrypt:conscrypt-android:2.5.2' // https://stackoverflow.com/a/58662077/129437
-
     // Support modern Java classes (e.g., ZonedDateTime)
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
     // Awala
-    implementation 'com.github.relaycorp:awala-endpoint-android:1.6.6'
+    implementation 'com.github.relaycorp:awala-endpoint-android:1.6.13'
     // Preferences
     implementation 'androidx.preference:preference-ktx:1.1.1'
     implementation 'com.fredporciuncula:flow-preferences:1.5.0'
