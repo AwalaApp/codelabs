@@ -20,7 +20,7 @@ You're going to work with the [Awala Ping](https://specs.awala.network/RS-014) s
 
 You'll build a [Fastify](https://www.fastify.io)-powered HTTP server that will act as a public endpoint in the Ping service, and you'll deploy it to [Google App Engine](https://cloud.google.com/appengine) (GAE).
 
-Say your public endpoint address is `ping.awala.services` and a private endpoint in an Android app sends you a ping, as illustrated in the picture below. When the private endpoint sends the ping, the message will pass through the [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway), then on to a public gateway (such as `frankfurt.relaycorp.cloud`), and it'll finally arrive at your public endpoint.
+Say your public endpoint address is `ping.awala.services` and a private endpoint in an Android app sends you a ping, as illustrated in the picture below. When the private endpoint sends the ping, the message will pass through the _private gateway_ on the Android/desktop device, then on to a public gateway (such as `frankfurt.relaycorp.cloud`), and it'll finally arrive at your public endpoint.
 
 ![](images/ping-service/service-architecture-ping.png)
 
@@ -35,13 +35,11 @@ Positive
 
 ### What you'll need
 
-- Very basic understanding of Node.js, JavaScript/TypeScript and HTTP.
+- A very basic understanding of Node.js, HTTP and DNS.
 - [Node.js](https://nodejs.org/en/download/) 14+. We'll assume that `npm`, `npx` and `node` are in your `$PATH`.
 - A [Google Cloud Platform](https://cloud.google.com/) (GCP) account. As of this writing, running this codelab alone won't exceed your [free quota](https://cloud.google.com/appengine/quotas).
 - A domain name with DNSSEC enabled and the ability to create SRV records. If you don't have one already, register a cheap one with your favourite registrar. Alternatively, if you know of a service offering this for free, use it and please [let us know about it](https://github.com/AwalaNetwork/codelabs/issues/5).
-- An Android phone or tablet running Android 5+.
-- The [private gateway](https://play.google.com/store/apps/details?id=tech.relaycorp.gateway) installed on that Android device.
-- [Android Studio](https://developer.android.com/studio). We won't assume you know how to use it, but we'll assume it's properly installed. This requirement will go away once we release [Awala Ping](https://github.com/relaycorp/relaynet-ping-android/) on the Google Play Store.
+- [The private gateway](https://awala.network/users/download), otherwise known simply as "Awala" in non-technical documents.
 
 ### In case you need help
 
@@ -585,56 +583,55 @@ gcloud app deploy
 
 For good measure, make the same POST request, but this time to the `appspot.com` URL. You should get the exact same response.
 
-## Test it with an Android app
+## Test your endpoint
 
-Duration: 10:00
+Duration: 5:00
 
-It's finally time to test your public endpoint! You're going to test it with the Android app built for the [Android Centralised codelab](https://codelabs.awala.network/codelabs/android-centralised/).
+It's finally time to test your public endpoint, and you'll use [`awala-ping`](https://www.npmjs.com/package/@relaycorp/awala-ping) for that.
 
-### Check the SRV record propagation
+### Install `awala-ping`
 
-But first, make sure that the SRV record you created earlier is up and running by going to [dnschecker.org](https://dnschecker.org/#SRV/_awala-pdc._tcp.ping.awala.services) (replace `ping.awala.services` with the public address of your endpoint).
-
-If it doesn't look right, please check with your DNS hosting provider and/or registrar.
-
-### Set up the Android app locally
-
-Positive
-: You can skip this if you've already done the Android Centralised codelab and still have the app configured in Android Studio.
-
-First, [download the Android app](https://codelabs.awala.network/examples/android-centralised.zip) and unzip it.
-
-Start Android Studio, and open the directory containing the app. If you're using Android Studio for the first time, you'll get a shortcut to open an existing project. Otherwise, go to `File` -> `Open...`.
-
-Now install the app on your Android device by going to `Run` -> `Run 'app'`. After a few minutes, the app should start in the device.
-
-![](images/nodejs-pong/android-studio-run-app.png)
-
-Make sure the device is connected to the Internet and then press "Send ping" to make sure you're able to communicate with the public endpoint at `ping.awala.services`. If everything works as expected, your pings should be getting their respective pong messages as shown in the screen below:
-
-![](images/android-centralised/app-screenshot.png)
-
-### Use your own endpoint
-
-Now it's time to use your own public endpoint.
-
-First, uninstall the Ping app or clear its data. This is important to make sure it will use your own endpoint's parameters.
-
-Then open `App.kt` and replace `ping.awala.services` with your own endpoint's public address -- the one you created the SRV record for.
-
-Finally, replace `app/src/main/res/raw/pub_endpoint_identity.der` with your endpoint's identity certificate. On Linux/macOS, you can run the following command (using the correct `appspot.com` domain):
+To install the app, simply run:
 
 ```shell
-curl \
-  -o app/src/main/res/raw/pub_endpoint_identity.der \
-  https://pong-codelab.nw.r.appspot.com/identity.der
+npm install -g @relaycorp/awala-ping
+```
+
+Make sure that it's working properly by pinging `ping.awala.services`, so start the [private gateway](https://awala.network/users/download) (if it isn't running already) and run the following:
+
+```shell
+awala-ping ping
+```
+
+You'll see a message saying that a ping message was sent and another saying that the pong message was received.
+
+### Import your endpoint
+
+You need to import your endpoint with `awala-ping` so that you can use it. The public endpoint `ping.awala.services` works straightaway because it's imported automatically the first time you use `awala-ping`.
+
+To import your public endpoint, you should call `awala-ping third-party-endpoints import-public` with your endpoint's identity certificate and its public address. For example:
+
+```shell
+awala-ping third-party-endpoints import-public \
+  pong-codelab.awala.services \
+  < identity-certificate.der
 ```
 
 ### Test it!
 
-Reinstall the app on your Android device and try sending more pings -- you should be getting pongs back!
+You're now ready to call `awala-ping ping` with your public endpoint! For example:
 
-You might want to check the [app logs](https://console.cloud.google.com/logs/query), to make sure that it is indeed your endpoint processing those pings (instead of `ping.awala.services`), or in case the Android app isn't getting pong messages back.
+```shell
+awala-ping ping pong-codelab.awala.services
+```
+
+If you're not getting a message saying that a ping was sent, make sure that the private gateway is indeed running.
+
+If pings are sent, but you never get pongs, check the following:
+
+- Make sure that your GAE app is getting pings and sending pongs by checking [its logs](https://console.cloud.google.com/logs/query). If it's failing to process pings or send pongs, you'll find the reason in those logs.
+- If your GAE app isn't even getting pings, check that the SRV record you created earlier is up and running by going to [dnschecker.org](https://dnschecker.org/#SRV/_awala-pdc._tcp.ping.awala.services) (replace `ping.awala.services` with the public address of your endpoint). If it doesn't look right, check with your DNS hosting provider and/or registrar.
+- If the above looks good but you're still not getting pongs, [let us know](https://community.awala.network/c/service-providers/6).
 
 ## That's it!
 
