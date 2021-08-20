@@ -33,7 +33,7 @@
 <p>You&#39;re going to work with the <a href="https://specs.awala.network/RS-014" target="_blank">Awala Ping</a> service in this codelab. Ping is a trivial service used to test Awala itself by having private endpoints send <em>pings</em> to other endpoints and getting <em>pongs</em> in response. The recipient of the ping can be public or private, but here you&#39;ll only use a public endpoint.</p>
 <h2 is-upgraded>What you&#39;ll build</h2>
 <p>You&#39;ll build a <a href="https://www.fastify.io" target="_blank">Fastify</a>-powered HTTP server that will act as a public endpoint in the Ping service, and you&#39;ll deploy it to <a href="https://cloud.google.com/appengine" target="_blank">Google App Engine</a> (GAE).</p>
-<p>Say your public endpoint address is <code>ping.awala.services</code> and a private endpoint in an Android app sends you a ping, as illustrated in the picture below. When the private endpoint sends the ping, the message will pass through the <a href="https://play.google.com/store/apps/details?id=tech.relaycorp.gateway" target="_blank">private gateway</a>, then on to a public gateway (such as <code>frankfurt.relaycorp.cloud</code>), and it&#39;ll finally arrive at your public endpoint.</p>
+<p>Say your public endpoint address is <code>ping.awala.services</code> and a private endpoint in an Android app sends you a ping, as illustrated in the picture below. When the private endpoint sends the ping, the message will pass through the <em>private gateway</em> on the Android/desktop device, then on to a public gateway (such as <code>frankfurt.relaycorp.cloud</code>), and it&#39;ll finally arrive at your public endpoint.</p>
 <p class="image-container"><img src="img/e365b8401314ec6a.png"></p>
 <p>On the other hand, pong messages do the same route in reverse:</p>
 <p class="image-container"><img src="img/e49a74cb42c3ed18.png"></p>
@@ -41,13 +41,11 @@
 <p>Positive : The Ping service uses a request-response pattern because its sole purpose is to test that endpoints can send and receive data. However, <strong>endpoints in your own services can send messages at any time</strong> and there&#39;s no requirement to respond to messages. Your endpoints should just push data to their peers whenever new data is available, without waiting for anyone else to &#34;initiate&#34; the communication.</p>
 <h2 is-upgraded>What you&#39;ll need</h2>
 <ul>
-<li>Very basic understanding of Node.js, JavaScript/TypeScript and HTTP.</li>
+<li>A very basic understanding of Node.js, HTTP and DNS.</li>
 <li><a href="https://nodejs.org/en/download/" target="_blank">Node.js</a> 14+. We&#39;ll assume that <code>npm</code>, <code>npx</code> and <code>node</code> are in your <code>$PATH</code>.</li>
 <li>A <a href="https://cloud.google.com/" target="_blank">Google Cloud Platform</a> (GCP) account. As of this writing, running this codelab alone won&#39;t exceed your <a href="https://cloud.google.com/appengine/quotas" target="_blank">free quota</a>.</li>
 <li>A domain name with DNSSEC enabled and the ability to create SRV records. If you don&#39;t have one already, register a cheap one with your favourite registrar. Alternatively, if you know of a service offering this for free, use it and please <a href="https://github.com/AwalaNetwork/codelabs/issues/5" target="_blank">let us know about it</a>.</li>
-<li>An Android phone or tablet running Android 5+.</li>
-<li>The <a href="https://play.google.com/store/apps/details?id=tech.relaycorp.gateway" target="_blank">private gateway</a> installed on that Android device.</li>
-<li><a href="https://developer.android.com/studio" target="_blank">Android Studio</a>. We won&#39;t assume you know how to use it, but we&#39;ll assume it&#39;s properly installed. This requirement will go away once we release <a href="https://github.com/relaycorp/relaynet-ping-android/" target="_blank">Awala Ping</a> on the Google Play Store.</li>
+<li><a href="https://awala.network/users/download" target="_blank">The private gateway</a>, otherwise known simply as &#34;Awala&#34; in non-technical documents.</li>
 </ul>
 <h2 is-upgraded>In case you need help</h2>
 <p>If you have any issues in the course of this codelab, please post a message on <a href="https://community.awala.network/" target="_blank">our forum</a> and we&#39;ll help you out! You can also check out the <a href="https://github.com/AwalaNetwork/codelabs/tree/main/examples/nodejs-pong" target="_blank">final version of the app you&#39;re going to build</a>.</p>
@@ -463,31 +461,34 @@ try {
 
       </google-codelab-step>
     
-      <google-codelab-step label="Test it with an Android app" duration="10">
-        <p>It&#39;s finally time to test your public endpoint! You&#39;re going to test it with the Android app built for the <a href="https://codelabs.awala.network/codelabs/android-centralised/" target="_blank">Android Centralised codelab</a>.</p>
-<h2 is-upgraded>Check the SRV record propagation</h2>
-<p>But first, make sure that the SRV record you created earlier is up and running by going to <a href="https://dnschecker.org/#SRV/_awala-pdc._tcp.ping.awala.services" target="_blank">dnschecker.org</a> (replace <code>ping.awala.services</code> with the public address of your endpoint).</p>
-<p>If it doesn&#39;t look right, please check with your DNS hosting provider and/or registrar.</p>
-<h2 is-upgraded>Set up the Android app locally</h2>
-<p>Positive : You can skip this if you&#39;ve already done the Android Centralised codelab and still have the app configured in Android Studio.</p>
-<p>First, <a href="https://codelabs.awala.network/examples/android-centralised.zip" target="_blank">download the Android app</a> and unzip it.</p>
-<p>Start Android Studio, and open the directory containing the app. If you&#39;re using Android Studio for the first time, you&#39;ll get a shortcut to open an existing project. Otherwise, go to <code>File</code> -&gt; <code>Open...</code>.</p>
-<p>Now install the app on your Android device by going to <code>Run</code> -&gt; <code>Run 'app'</code>. After a few minutes, the app should start in the device.</p>
-<p class="image-container"><img src="img/58917d6117447afa.png"></p>
-<p>Make sure the device is connected to the Internet and then press &#34;Send ping&#34; to make sure you&#39;re able to communicate with the public endpoint at <code>ping.awala.services</code>. If everything works as expected, your pings should be getting their respective pong messages as shown in the screen below:</p>
-<p class="image-container"><img src="img/6214ecdb1bfe0126.png"></p>
-<h2 is-upgraded>Use your own endpoint</h2>
-<p>Now it&#39;s time to use your own public endpoint.</p>
-<p>First, uninstall the Ping app or clear its data. This is important to make sure it will use your own endpoint&#39;s parameters.</p>
-<p>Then open <code>App.kt</code> and replace <code>ping.awala.services</code> with your own endpoint&#39;s public address – the one you created the SRV record for.</p>
-<p>Finally, replace <code>app/src/main/res/raw/pub_endpoint_identity.der</code> with your endpoint&#39;s identity certificate. On Linux/macOS, you can run the following command (using the correct <code>appspot.com</code> domain):</p>
-<pre><code language="language-shell" class="language-shell">curl \
-  -o app/src/main/res/raw/pub_endpoint_identity.der \
-  https://pong-codelab.nw.r.appspot.com/identity.der
+      <google-codelab-step label="Test your endpoint" duration="5">
+        <p>It&#39;s finally time to test your public endpoint, and you&#39;ll use <a href="https://www.npmjs.com/package/@relaycorp/awala-ping" target="_blank"><code>awala-ping</code></a> for that.</p>
+<h2 is-upgraded>Install <code>awala-ping</code></h2>
+<p>To install the app, simply run:</p>
+<pre><code language="language-shell" class="language-shell">npm install -g @relaycorp/awala-ping
+</code></pre>
+<p>Make sure that it&#39;s working properly by pinging <code>ping.awala.services</code>, so start the <a href="https://awala.network/users/download" target="_blank">private gateway</a> (if it isn&#39;t running already) and run the following:</p>
+<pre><code language="language-shell" class="language-shell">awala-ping ping
+</code></pre>
+<p>You&#39;ll see a message saying that a ping message was sent and another saying that the pong message was received.</p>
+<h2 is-upgraded>Import your endpoint</h2>
+<p>You need to import your endpoint with <code>awala-ping</code> so that you can use it. The public endpoint <code>ping.awala.services</code> works straightaway because it&#39;s imported automatically the first time you use <code>awala-ping</code>.</p>
+<p>To import your public endpoint, you should call <code>awala-ping third-party-endpoints import-public</code> with your endpoint&#39;s identity certificate and its public address. For example:</p>
+<pre><code language="language-shell" class="language-shell">awala-ping third-party-endpoints import-public \
+  pong-codelab.awala.services \
+  &lt; identity-certificate.der
 </code></pre>
 <h2 is-upgraded>Test it!</h2>
-<p>Reinstall the app on your Android device and try sending more pings – you should be getting pongs back!</p>
-<p>You might want to check the <a href="https://console.cloud.google.com/logs/query" target="_blank">app logs</a>, to make sure that it is indeed your endpoint processing those pings (instead of <code>ping.awala.services</code>), or in case the Android app isn&#39;t getting pong messages back.</p>
+<p>You&#39;re now ready to call <code>awala-ping ping</code> with your public endpoint! For example:</p>
+<pre><code language="language-shell" class="language-shell">awala-ping ping pong-codelab.awala.services
+</code></pre>
+<p>If you&#39;re not getting a message saying that a ping was sent, make sure that the private gateway is indeed running.</p>
+<p>If pings are sent, but you never get pongs, check the following:</p>
+<ul>
+<li>Make sure that your GAE app is getting pings and sending pongs by checking <a href="https://console.cloud.google.com/logs/query" target="_blank">its logs</a>. If it&#39;s failing to process pings or send pongs, you&#39;ll find the reason in those logs.</li>
+<li>If your GAE app isn&#39;t even getting pings, check that the SRV record you created earlier is up and running by going to <a href="https://dnschecker.org/#SRV/_awala-pdc._tcp.ping.awala.services" target="_blank">dnschecker.org</a> (replace <code>ping.awala.services</code> with the public address of your endpoint). If it doesn&#39;t look right, check with your DNS hosting provider and/or registrar.</li>
+<li>If the above looks good but you&#39;re still not getting pongs, <a href="https://community.awala.network/c/service-providers/6" target="_blank">let us know</a>.</li>
+</ul>
 
 
       </google-codelab-step>
