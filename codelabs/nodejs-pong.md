@@ -627,7 +627,7 @@ awala-ping ping pong-codelab.awala.services
 
 If you're not getting a message saying that a ping was sent, make sure that the private gateway is indeed running.
 
-If pings are sent, but you never get pongs, check the following:
+If pings are sent, but you never get pongs, try the following:
 
 - Make sure that your GAE app is getting pings and sending pongs by checking [its logs](https://console.cloud.google.com/logs/query). If it's failing to process pings or send pongs, you'll find the reason in those logs.
 - If your GAE app isn't even getting pings, check that the SRV record you created earlier is up and running by going to [dnschecker.org](https://dnschecker.org/#SRV/_awala-pdc._tcp.ping.awala.services) (replace `ping.awala.services` with the public address of your endpoint). If it doesn't look right, check with your DNS hosting provider and/or registrar.
