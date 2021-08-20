@@ -3,7 +3,7 @@
   "format": "html",
   "prefix": "https://storage.googleapis.com",
   "mainga": "UA-49880327-14",
-  "updated": "2021-08-20T14:08:15Z",
+  "updated": "2021-08-20T14:12:14Z",
   "id": "nodejs-pong",
   "duration": 55,
   "title": "Build a public endpoint using Node.js",
